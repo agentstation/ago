@@ -164,3 +164,12 @@ jobs:
           distribution: goreleaser
           version: v2.17.1
           args: check
+
+      # goreleaser check accepts a tap token written as an index expression,
+      # and a snapshot never resolves the token at all, so both pass while a
+      # real release fails after the assets are already uploaded. Pin the one
+      # spelling goreleaser accepts at publication.
+      - name: Tap token uses the literal env template
+        run: |
+          grep -qF 'token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"' .goreleaser.yaml \
+            || { echo "tap token must be the literal {{ .Env.NAME }} form"; exit 1; }
