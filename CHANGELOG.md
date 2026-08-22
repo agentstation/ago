@@ -11,7 +11,7 @@ version bump at minimum, because it can fail a build that previously passed.
 
 ## [Unreleased]
 
-## [0.1.0]
+## [0.1.0] - 2026-08-22
 
 Initial public release.
 
