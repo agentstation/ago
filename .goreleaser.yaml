@@ -53,11 +53,9 @@ homebrew_casks:
     repository:
       owner: agentstation
       name: homebrew-tap
-      git:
-        url: ssh://git@github.com/agentstation/homebrew-tap.git
-        # Snapshot builds have no tap credentials. index returns an empty value
-        # for the missing key, while stable publication still supplies it.
-        private_key: '{{ index .Env "HOMEBREW_TAP_DEPLOY_KEY" }}'
+      # Snapshot builds have no tap credentials. index returns an empty value
+      # for the missing key, while stable publication still supplies it.
+      token: '{{ index .Env "HOMEBREW_TAP_TOKEN" }}'
     # Never replace the stable cask with a release candidate.
     skip_upload: auto
     directory: Casks
