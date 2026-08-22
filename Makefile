@@ -75,11 +75,17 @@ vet: ## Run go vet
 
 .PHONY: lint
 lint: fmt-check vet ## Run gofmt, go vet, and golangci-lint
-	@if command -v golangci-lint >/dev/null 2>&1; then \
-		golangci-lint run; \
-	else \
+	@if ! command -v golangci-lint >/dev/null 2>&1; then \
 		echo "golangci-lint not installed; run: make tools"; exit 1; \
 	fi
+	@# A different version on PATH finds a different set of issues, so a clean
+	@# run here can still fail CI. Warn rather than stop: the run is still useful.
+	@have=$$(golangci-lint version 2>/dev/null | sed -n 's/.*has version \([^ ]*\).*/\1/p'); \
+	want=$(GOLANGCI_LINT_VERSION:v%=%); \
+	if [ "$$have" != "$$want" ]; then \
+		echo "warning: golangci-lint $$have on PATH, CI runs $$want; run: make tools"; \
+	fi
+	golangci-lint run
 
 .PHONY: tidy
 tidy: ## Tidy and verify go.mod

@@ -29,6 +29,13 @@ linters:
         - fmt.Fprintf
         - fmt.Fprintln
 
+    goconst:
+      # A test spells a rule name out as a literal on purpose: asserting
+      # against a constant that the code under test also uses would prove
+      # nothing about the name. Without this, goconst counts those literals
+      # and reports the total against the one real occurrence in the registry.
+      ignore-tests: true
+
   exclusions:
     paths:
       # Fixtures are deliberately bad Go. That is the point of them.
