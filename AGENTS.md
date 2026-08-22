@@ -33,5 +33,7 @@ well as findings.
 `testdata/` holds intentionally unparseable Go. Never run `gofmt` or `go vet`
 across it; the Makefile targets already exclude it.
 
-`no-generic-methods` is dormant before Go 1.27 and its test skips itself. Do not
-"fix" that skip.
+A rule that reverts a language change is dormant on toolchains older than that
+change, and its fixture cannot compile there. Those tests skip themselves:
+`no-new-expr` and the two constraint rules need Go 1.26, `no-generic-methods`
+needs Go 1.27. Do not "fix" those skips — set `minGo` on the fixture instead.

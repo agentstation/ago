@@ -22,7 +22,11 @@ jobs:
 
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: stable
+          # Not "stable". golangci-lint bundles its own type checker, and
+          # v2.12.2 cannot parse the Go 1.27 standard library — it fails on
+          # internal/poll with "unknown field rfd in struct literal". Raise
+          # this once golangci-lint ships Go 1.27 support.
+          go-version: "1.26.x"
 
       # testdata holds intentionally unparseable Go, so gofmt must not walk it.
       - name: Check formatting

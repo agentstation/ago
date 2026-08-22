@@ -5,6 +5,9 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"runtime"
+	"strconv"
+	"strings"
 	"testing"
 
 	"golang.org/x/tools/go/analysis"
@@ -18,24 +21,52 @@ func TestRules(t *testing.T) {
 	tests := []struct {
 		rule Rule
 		pkg  string
+		// minGo is the Go minor version the fixture needs in order to
+		// type-check. A fixture for a rule that reverts a language change
+		// cannot compile on a toolchain from before that change, and the rule
+		// is dormant there anyway: the compiler is already enforcing it.
+		minGo int
 	}{
-		{RuleNoGoto, "nogoto"},
-		{RuleNoNewExpr, "nonewexpr"},
-		{RuleNoNakedReturn, "nonakedreturn"},
-		{RuleNoSelfReferentialConstraints, "noselfref"},
-		{RuleNoFBoundedConstraints, "nofbounded"},
-		{RuleNoGenericDecls, "nogenericdecls"},
-		{RuleNoDotImport, "nodotimport"},
-		{RuleNoBlankImportOutsideMain, "noblankimport"},
-		{RuleNoEmbeddedField, "noembedded"},
-		{RuleNoInitFunc, "noinitfunc"},
-		{RuleNoRedundantShortDecl, "noshortdecl"},
+		{rule: RuleNoGoto, pkg: "nogoto"},
+		{rule: RuleNoNewExpr, pkg: "nonewexpr", minGo: 26},
+		{rule: RuleNoNakedReturn, pkg: "nonakedreturn"},
+		{rule: RuleNoSelfReferentialConstraints, pkg: "noselfref", minGo: 26},
+		{rule: RuleNoFBoundedConstraints, pkg: "nofbounded"},
+		{rule: RuleNoFBoundedConstraints, pkg: "nofboundedselfref", minGo: 26},
+		{rule: RuleNoGenericDecls, pkg: "nogenericdecls"},
+		{rule: RuleNoDotImport, pkg: "nodotimport"},
+		{rule: RuleNoBlankImportOutsideMain, pkg: "noblankimport"},
+		{rule: RuleNoEmbeddedField, pkg: "noembedded"},
+		{rule: RuleNoInitFunc, pkg: "noinitfunc"},
+		{rule: RuleNoRedundantShortDecl, pkg: "noshortdecl"},
 	}
 	for _, tt := range tests {
-		t.Run(tt.rule.Name, func(t *testing.T) {
+		t.Run(tt.pkg, func(t *testing.T) {
+			if tt.minGo > 0 && !goAtLeast(tt.minGo) {
+				t.Skipf("fixture needs Go 1.%d; %s cannot compile it, so %s is dormant",
+					tt.minGo, runtime.Version(), tt.rule.Name)
+			}
 			analysistest.Run(t, analysistest.TestData(), tt.rule.Analyzer, tt.pkg)
 		})
 	}
+}
+
+// goAtLeast reports whether the toolchain running the tests is at least
+// Go 1.<minor>. An unrecognized version string is treated as new enough, so a
+// development toolchain runs the tests rather than silently skipping them.
+func goAtLeast(minor int) bool {
+	v := strings.TrimPrefix(runtime.Version(), "go1.")
+	if v == runtime.Version() {
+		return true
+	}
+	if i := strings.IndexAny(v, ".rc-+ "); i >= 0 {
+		v = v[:i]
+	}
+	got, err := strconv.Atoi(v)
+	if err != nil {
+		return true
+	}
+	return got >= minor
 }
 
 // TestNoGenericMethods checks the Go 1.27 rule. The fixture is written at run

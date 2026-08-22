@@ -17,10 +17,6 @@ type Graph[N any, E Edge[N]] struct {
 	edges []E
 }
 
-// Already reported by no-self-referential-constraints, so this rule stays
-// quiet rather than reporting the same declaration twice.
-type Adder[A Adder[A]] interface{ Add(A) A }
-
 type Pair[K comparable, V any] struct {
 	k K
 	v V
