@@ -53,9 +53,10 @@ homebrew_casks:
     repository:
       owner: agentstation
       name: homebrew-tap
-      # Snapshot builds have no tap credentials. index returns an empty value
-      # for the missing key, while stable publication still supplies it.
-      token: '{{ index .Env "HOMEBREW_TAP_TOKEN" }}'
+      # goreleaser validates this field literally: only the "{{ .Env.NAME }}"
+      # form passes, not an index expression. It is resolved at publication,
+      # so snapshot builds do not need the variable set.
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     # Never replace the stable cask with a release candidate.
     skip_upload: auto
     directory: Casks
