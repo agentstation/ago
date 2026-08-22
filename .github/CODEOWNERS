@@ -1,0 +1,7 @@
+* @agentstation/maintainers
+
+# Rule behavior is the public interface. Changes here need a rule owner.
+/rule*.go       @agentstation/maintainers
+/testdata/      @agentstation/maintainers
+/.github/       @agentstation/maintainers
+/.goreleaser.yaml @agentstation/maintainers

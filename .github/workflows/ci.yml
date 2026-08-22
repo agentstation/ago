@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+
+      # testdata holds intentionally unparseable Go, so gofmt must not walk it.
+      - name: Check formatting
+        run: make fmt-check
+
+      - name: Verify go.mod is tidy
+        run: |
+          go mod tidy -diff
+          go mod verify
+
+      - uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.12.2
+
+  test:
+    name: Test (Go ${{ matrix.go }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        # 1.25 is the go directive in go.mod. 1.27 is the only toolchain on
+        # which no-generic-methods has anything to report, so it must stay in
+        # the matrix for that rule to be tested at all.
+        go: ["1.25.x", "1.26.x", "1.27.x"]
+        include:
+          - os: macos-latest
+            go: "1.27.x"
+          - os: windows-latest
+            go: "1.27.x"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Test
+        run: go test -race ./...
+
+      - name: Vet
+        run: go vet ./...
+
+  generic-methods:
+    name: Assert no-generic-methods is live on Go 1.27
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.27.x"
+
+      # The rule is dormant before Go 1.27 and its unit test skips itself
+      # there. Without this job a regression that silently disabled the rule
+      # would look exactly like the expected skip.
+      - name: Rule reports a generic method
+        run: |
+          set -euo pipefail
+          go build -o "$RUNNER_TEMP/ago" ./cmd/ago
+          mkdir -p "$RUNNER_TEMP/gm"
+          cd "$RUNNER_TEMP/gm"
+          printf 'module gm\n\ngo 1.27\n' > go.mod
+          cat > gm.go <<'GO'
+          package gm
+
+          type Box struct{ v any }
+
+          func (b Box) MapTo[R any](f func(any) R) R { return f(b.v) }
+
+          func Plain[R any](b Box, f func(any) R) R { return f(b.v) }
+          GO
+          set +e
+          out=$("$RUNNER_TEMP/ago" -no-config -rules no-generic-methods ./...)
+          status=$?
+          set -e
+          echo "$out"
+          test $status -eq 1 || { echo "expected exit 1, got $status"; exit 1; }
+          echo "$out" | grep -q 'method MapTo declares its own type parameters' \
+            || { echo "rule did not report the generic method"; exit 1; }
+          test "$(echo "$out" | grep -c 'no-generic-methods')" -eq 1 \
+            || { echo "expected exactly one finding"; exit 1; }
+
+  dogfood:
+    name: Dogfood
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+
+      - name: Run ago against its own source
+        run: |
+          go build -o ago ./cmd/ago
+          ./ago -format github ./...
+
+      - name: Report stale suppressions
+        run: ./ago -stale-ignores ./...
+
+  build:
+    name: Cross-compile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+
+      - name: Build every release target
+        run: |
+          set -euo pipefail
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
+            echo "building $target"
+            GOOS=${target%/*} GOARCH=${target#*/} CGO_ENABLED=0 \
+              go build -o /dev/null ./cmd/ago
+          done
+
+  release-config:
+    name: Validate release config
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+
+      - uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        with:
+          distribution: goreleaser
+          version: v2.17.1
+          args: check

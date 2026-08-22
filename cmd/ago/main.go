@@ -1,0 +1,372 @@
+// Command ago enforces a restricted subset of Go.
+//
+// ago only ever rejects language constructs. It never adds syntax, never
+// rewrites code, and never changes semantics. Code that passes ago is
+// ordinary Go that builds with the stock toolchain.
+//
+// Usage:
+//
+//	ago [flags] [packages]
+//
+// The package arguments are go/packages patterns, the same ones go build and
+// go vet accept. With no arguments ago checks ./... under the working
+// directory.
+//
+// Flags:
+//
+//	-list             list the rule set and exit
+//	-explain rule     print a rule's full rationale and exit
+//	-rules a,b,c      run these rules, overriding the config file
+//	-all              run every rule
+//	-tests            also check _test.go files
+//	-format f         text, json, sarif, or github (default text)
+//	-config path      read this config instead of searching for .ago.yml
+//	-no-config        ignore any .ago.yml on disk
+//	-init             write a starter .ago.yml and exit
+//	-stale-ignores    report //ago:ignore directives that suppressed nothing
+//	-version          print the version and exit
+//
+// Exit status:
+//
+//	0  no violations
+//	1  at least one violation
+//	2  ago could not complete the run
+//
+// A load or type error does not by itself abort the run: ago reports what it
+// could analyze and exits 2 only when it produced no usable result.
+package main
+
+import (
+	"errors"
+	"flag"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+
+	"github.com/agentstation/ago"
+)
+
+// Exit statuses. They are part of the command's contract with CI and with
+// coding agents, so they are named rather than written inline.
+const (
+	exitClean      = 0
+	exitViolations = 1
+	exitError      = 2
+)
+
+func main() {
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+func run(args []string, stdout, stderr *os.File) int {
+	fs := flag.NewFlagSet("ago", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	var (
+		listFlag    = fs.Bool("list", false, "list the rule set and exit")
+		explainFlag = fs.String("explain", "", "print a rule's full rationale and exit")
+		rulesFlag   = fs.String("rules", "", "comma-separated rules to run, overriding the config file")
+		allFlag     = fs.Bool("all", false, "run every rule")
+		testsFlag   = fs.Bool("tests", false, "also check _test.go files")
+		formatFlag  = fs.String("format", "text", "output format: text, json, sarif, or github")
+		configFlag  = fs.String("config", "", "read this config instead of searching for .ago.yml")
+		noConfig    = fs.Bool("no-config", false, "ignore any .ago.yml on disk")
+		initFlag    = fs.Bool("init", false, "write a starter .ago.yml and exit")
+		staleFlag   = fs.Bool("stale-ignores", false, "report //ago:ignore directives that suppressed nothing")
+		versionFlag = fs.Bool("version", false, "print the version and exit")
+	)
+	fs.SetOutput(stderr)
+	fs.Usage = func() { usage(stderr, fs) }
+	if err := fs.Parse(args); err != nil {
+		// -h is a request that succeeded, not a failed run. Print the help to
+		// stdout so it can be piped, and exit clean.
+		if errors.Is(err, flag.ErrHelp) {
+			usage(stdout, fs)
+			return exitClean
+		}
+		return exitError
+	}
+
+	switch {
+	case *versionFlag:
+		fmt.Fprintf(stdout, "ago %s\n", ago.Version)
+		return exitClean
+	case *initFlag:
+		return writeInitConfig(stdout, stderr)
+	case *explainFlag != "":
+		return explain(stdout, stderr, *explainFlag)
+	}
+
+	format, err := ago.ParseFormat(*formatFlag)
+	if err != nil {
+		fmt.Fprintf(stderr, "ago: %v\n", err)
+		return exitError
+	}
+
+	cfg := &ago.Config{}
+	if !*noConfig {
+		cfg, err = ago.LoadConfig(".", *configFlag)
+		if err != nil {
+			fmt.Fprintf(stderr, "ago: %v\n", err)
+			return exitError
+		}
+	}
+
+	overrides, err := ruleOverrides(*rulesFlag, *allFlag)
+	if err != nil {
+		fmt.Fprintf(stderr, "ago: %v\n", err)
+		return exitError
+	}
+	rules := cfg.Enabled(overrides)
+	if len(rules) == 0 {
+		fmt.Fprintln(stderr, "ago: no rules enabled; check your -rules flag or .ago.yml")
+		return exitError
+	}
+
+	if *listFlag {
+		listRules(stdout, format, rules)
+		return exitClean
+	}
+
+	report, err := ago.Check(ago.Options{
+		Patterns:           fs.Args(),
+		Rules:              rules,
+		Tests:              *testsFlag || cfg.Tests,
+		Config:             cfg,
+		ReportStaleIgnores: *staleFlag,
+	})
+	if err != nil {
+		fmt.Fprintf(stderr, "ago: %v\n", err)
+		return exitError
+	}
+	if err := report.Write(stdout, format); err != nil {
+		fmt.Fprintf(stderr, "ago: writing report: %v\n", err)
+		return exitError
+	}
+
+	// Load errors go to stderr so that they never contaminate a machine-read
+	// stdout, and are already carried in the JSON and SARIF documents.
+	if format == ago.FormatText || format == ago.FormatGitHub {
+		for _, e := range report.Errors {
+			fmt.Fprintf(stderr, "ago: %s\n", e)
+		}
+	}
+
+	switch {
+	case len(report.Findings) > 0 || len(report.StaleIgnores) > 0:
+		if format == ago.FormatText {
+			fmt.Fprintf(stderr, "\n%s\n", summary(report))
+		}
+		return exitViolations
+	case len(report.Errors) > 0 && len(report.Rules) > 0 && reportedNothing(report):
+		// Nothing was analyzable. Exiting 0 here would report a clean tree
+		// that was never actually checked.
+		fmt.Fprintln(stderr, "ago: no package could be analyzed")
+		return exitError
+	default:
+		return exitClean
+	}
+}
+
+// reportedNothing reports whether the run produced no findings at all, which
+// combined with load errors means the run was not meaningful.
+func reportedNothing(r *ago.Report) bool {
+	return len(r.Findings) == 0 && len(r.StaleIgnores) == 0
+}
+
+// summary renders the one-line tally printed after text output.
+func summary(r *ago.Report) string {
+	var parts []string
+	if n := len(r.Findings); n > 0 {
+		parts = append(parts, fmt.Sprintf("%d violation%s", n, plural(n)))
+	}
+	if n := len(r.StaleIgnores); n > 0 {
+		parts = append(parts, fmt.Sprintf("%d stale ignore%s", n, plural(n)))
+	}
+	return strings.Join(parts, ", ")
+}
+
+func plural(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
+}
+
+// ruleOverrides turns the -rules and -all flags into an explicit rule list.
+func ruleOverrides(rulesFlag string, all bool) ([]string, error) {
+	if all {
+		if rulesFlag != "" {
+			return nil, fmt.Errorf("-all and -rules are mutually exclusive")
+		}
+		return []string{"all"}, nil
+	}
+	if rulesFlag == "" {
+		return nil, nil
+	}
+	var out []string
+	for _, name := range strings.Split(rulesFlag, ",") {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			continue
+		}
+		if name == "all" || name == "default" {
+			out = append(out, name)
+			continue
+		}
+		r, ok := ago.Lookup(name)
+		if !ok {
+			return nil, fmt.Errorf("unknown rule %q; run \"ago -list\" for the rule set", name)
+		}
+		out = append(out, r.Name)
+	}
+	return out, nil
+}
+
+// listRules prints the rule set. In text form the enabled rules are marked, so
+// that "ago -list" doubles as a check on what the current config resolves to.
+func listRules(stdout *os.File, format ago.Format, enabled []ago.Rule) {
+	on := map[string]bool{}
+	for _, r := range enabled {
+		on[r.Name] = true
+	}
+	if format == ago.FormatJSON {
+		writeRulesJSON(stdout, on)
+		return
+	}
+	width := 0
+	for _, r := range ago.Rules() {
+		if len(r.Name) > width {
+			width = len(r.Name)
+		}
+	}
+	for _, r := range ago.Rules() {
+		mark := " "
+		if on[r.Name] {
+			mark = "*"
+		}
+		reverts := ""
+		if r.Reverts != "" {
+			reverts = "  [reverts Go " + r.Reverts + "]"
+		}
+		fmt.Fprintf(stdout, "%s %-*s  %s%s\n", mark, width, r.Name, r.Summary, reverts)
+	}
+	fmt.Fprintf(stdout, "\n* = enabled for this run (%d of %d)\n", len(enabled), len(ago.Rules()))
+	fmt.Fprintln(stdout, `Run "ago -explain <rule>" for the full rationale.`)
+}
+
+// ruleJSON is the -list -format json schema. It is what a coding agent reads
+// to discover the rule set without parsing prose.
+type ruleJSON struct {
+	Name      string `json:"name"`
+	Analyzer  string `json:"analyzer"`
+	Summary   string `json:"summary"`
+	Rationale string `json:"rationale"`
+	Default   bool   `json:"default"`
+	Enabled   bool   `json:"enabled"`
+	Reverts   string `json:"reverts,omitempty"`
+	Severity  string `json:"severity"`
+	DocURL    string `json:"docURL"`
+}
+
+func writeRulesJSON(stdout *os.File, enabled map[string]bool) {
+	out := struct {
+		Version string     `json:"version"`
+		Rules   []ruleJSON `json:"rules"`
+	}{Version: ago.Version}
+	for _, r := range ago.Rules() {
+		out.Rules = append(out.Rules, ruleJSON{
+			Name:      r.Name,
+			Analyzer:  r.Analyzer.Name,
+			Summary:   r.Summary,
+			Rationale: r.Rationale,
+			Default:   r.Default,
+			Enabled:   enabled[r.Name],
+			Reverts:   r.Reverts,
+			Severity:  string(r.Severity),
+			DocURL:    r.DocURL(),
+		})
+	}
+	encodeJSON(stdout, out)
+}
+
+// explain prints one rule's full rationale.
+func explain(stdout, stderr *os.File, name string) int {
+	r, ok := ago.Lookup(name)
+	if !ok {
+		fmt.Fprintf(stderr, "ago: unknown rule %q\n", name)
+		suggest(stderr, name)
+		return exitError
+	}
+	fmt.Fprintf(stdout, "%s\n\n", r.Name)
+	fmt.Fprintf(stdout, "  %s\n", r.Summary)
+	if r.Reverts != "" {
+		fmt.Fprintf(stdout, "  Reverts a language change introduced in Go %s.\n", r.Reverts)
+	}
+	state := "off"
+	if r.Default {
+		state = "on"
+	}
+	fmt.Fprintf(stdout, "  Default: %s\n  Docs:    %s\n\n%s\n", state, r.DocURL(), r.Rationale)
+	return exitClean
+}
+
+// suggest prints the rules whose names share a prefix with a misspelling.
+func suggest(stderr *os.File, name string) {
+	var near []string
+	for _, n := range ago.Names() {
+		if strings.Contains(n, name) || strings.Contains(name, n) {
+			near = append(near, n)
+		}
+	}
+	sort.Strings(near)
+	if len(near) > 0 {
+		fmt.Fprintf(stderr, "ago: did you mean %s?\n", strings.Join(near, ", "))
+		return
+	}
+	fmt.Fprintln(stderr, `ago: run "ago -list" for the rule set`)
+}
+
+// writeInitConfig writes a starter config, refusing to clobber an existing
+// one.
+func writeInitConfig(stdout, stderr *os.File) int {
+	path := ago.ConfigName
+	if _, err := os.Stat(path); err == nil {
+		fmt.Fprintf(stderr, "ago: %s already exists\n", path)
+		return exitError
+	}
+	// A config meant to be committed and read by the whole team is 0644.
+	if err := os.WriteFile(path, []byte(ago.ExampleConfig()), 0o644); err != nil { //nolint:gosec // team-readable by design
+		fmt.Fprintf(stderr, "ago: %v\n", err)
+		return exitError
+	}
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		abs = path
+	}
+	fmt.Fprintf(stdout, "wrote %s\n", abs)
+	return exitClean
+}
+
+func usage(stderr *os.File, fs *flag.FlagSet) {
+	fmt.Fprint(stderr, `ago enforces a restricted subset of Go.
+
+Usage:
+  ago [flags] [packages]
+
+Package arguments are go/packages patterns, the same ones go build accepts.
+With no arguments ago checks ./... under the working directory.
+
+Flags:
+`)
+	fs.PrintDefaults()
+	fmt.Fprint(stderr, `
+Exit status:
+  0  no violations
+  1  at least one violation
+  2  ago could not complete the run
+
+Docs: https://github.com/agentstation/ago
+`)
+}

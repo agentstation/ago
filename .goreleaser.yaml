@@ -1,0 +1,140 @@
+version: 2
+
+before:
+  hooks:
+    - go mod verify
+    - go mod tidy -diff
+
+builds:
+  - id: ago
+    binary: ago
+    main: ./cmd/ago
+    env:
+      - CGO_ENABLED=0
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/agentstation/ago.Version={{ .Version }}
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - id: ago
+    ids:
+      - ago
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    files:
+      - README.md
+      - CHANGELOG.md
+      - LICENSE
+      - LICENSE-MIT
+      - LICENSE-APACHE
+
+homebrew_casks:
+  - name: ago
+    ids:
+      - ago
+    repository:
+      owner: agentstation
+      name: homebrew-tap
+      git:
+        url: ssh://git@github.com/agentstation/homebrew-tap.git
+        # Snapshot builds have no tap credentials. index returns an empty value
+        # for the missing key, while stable publication still supplies it.
+        private_key: '{{ index .Env "HOMEBREW_TAP_DEPLOY_KEY" }}'
+    # Never replace the stable cask with a release candidate.
+    skip_upload: auto
+    directory: Casks
+    commit_author:
+      name: "GitHub Actions"
+      email: "actions@github.com"
+    commit_msg_template: "Update ago to {{ .Tag }}"
+    homepage: https://github.com/agentstation/ago
+    description: A restriction-only linter for Go
+    binaries:
+      - ago
+    hooks:
+      post:
+        install: |
+          if OS.mac? && system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/ago"], sudo: false
+          end
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+sboms:
+  - artifacts: archive
+    documents:
+      - "${artifact}.sbom.json"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^style:'
+      - '^refactor:'
+      - Merge pull request
+      - Merge branch
+  groups:
+    - title: New and changed rules
+      regexp: '^.*?feat\(rules?\)!?:.+$'
+      order: 0
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Fixes
+      regexp: '^.*?fix(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Performance
+      regexp: '^.*?perf(\([[:word:]]+\))??!?:.+$'
+      order: 3
+    - title: Build and CI
+      regexp: '^.*?(build|ci)(\([[:word:]]+\))??!?:.+$'
+      order: 4
+    - title: Other changes
+      order: 999
+
+release:
+  github:
+    owner: agentstation
+    name: ago
+  name_template: "ago {{ .Tag }}"
+  header: |
+    `ago` is a restriction-only linter for Go. Every rule rejects a legal
+    language construct; none adds syntax or rewrites code.
+
+    ```sh
+    brew install agentstation/tap/ago
+    ```
+
+    Verify downloaded archives against `checksums.txt`. Each archive ships an
+    SBOM alongside it.
+  footer: |
+    **Full changelog:** https://github.com/agentstation/ago/compare/{{ .PreviousTag }}...{{ .Tag }}
+  prerelease: auto
+  make_latest: '{{ if .Prerelease }}false{{ else }}true{{ end }}'

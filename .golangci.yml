@@ -1,0 +1,41 @@
+# golangci-lint configuration v2
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - ineffassign
+    - unused
+    - misspell
+    - gosec
+    - goconst
+    - gocyclo
+    - revive
+    - bodyclose
+    - noctx
+  settings:
+    errcheck:
+      # Writes to stdout and stderr in a CLI: a failed write to a closed pipe
+      # is not something this program can meaningfully recover from, and
+      # checking each one would bury the code that matters.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
+
+  exclusions:
+    paths:
+      # Fixtures are deliberately bad Go. That is the point of them.
+      - ^testdata/
+    rules:
+      - path: _test\.go
+        linters:
+          - gosec
+          - goconst
+          - dupl
