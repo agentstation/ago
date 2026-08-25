@@ -49,7 +49,7 @@ document.querySelector(".counts").textContent=closed+" of "+rows.length+" tasks 
   <p id="status-line">Status: <code data-plan-status="active">active</code>.<br>
     Owner: this plan. Created: 2026-08-24. Baseline: main @ c085a53.<br>
     Proof root: <code>proof/ago-adoption-dx/</code>.<br>
-    Next action: complete ADX0 baseline research and record the red verifier.</p>
+    Next action: repair the license layout and add its regression evidence.</p>
   <section id="outcome"><h2>Outcome</h2><blockquote>
     A Go repository can pin ago with the Go module and state its rule policy in
     <code>.ago.yml</code>. Coding agents and CI run the same stable command. The
@@ -106,9 +106,9 @@ task-led README + optional ago skill</code></pre></figure>
     docs, and command JSON.</p>
 </section>
 <section id="ledger"><h2>Status ledger</h2><table><thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Evidence</th></tr></thead><tbody>
-<tr id="ADX0" data-status="in_progress"><td>ADX0</td><td>Baseline research and verifier</td><td><code>in_progress</code></td><td>Live pkg.go.dev and repository inspection started 2026-08-24.</td></tr>
+<tr id="ADX0" data-status="done"><td>ADX0</td><td>Baseline research and verifier</td><td><code>done</code></td><td>Commit 6c58b23. Verifier records 4 failing and 1 passing conditions. See proof/ago-adoption-dx/adx0.md.</td></tr>
 <tr id="ADX1" data-status="blocked"><td>ADX1</td><td>Close pull request 2 review and merge</td><td><code>blocked(external approval)</code></td><td>Correction 0ff3ed9 pushed. GitHub requires a different reviewer.</td></tr>
-<tr id="ADX2" data-status="todo"><td>ADX2</td><td>Repair license detection and publish a patch release</td><td><code>todo</code></td><td></td></tr>
+<tr id="ADX2" data-status="in_progress"><td>ADX2</td><td>Repair license detection and publish a patch release</td><td><code>in_progress</code></td><td>License repair starts from the measured v0.1.0 UNKNOWN state.</td></tr>
 <tr id="ADX3" data-status="todo"><td>ADX3</td><td>Rewrite README around adoption tasks and Go tools</td><td><code>todo</code></td><td></td></tr>
 <tr id="ADX4" data-status="todo"><td>ADX4</td><td>Publish the optional ago Agent Skill</td><td><code>todo</code></td><td></td></tr>
 <tr id="ADX5" data-status="todo"><td>ADX5</td><td>Run release, documentation, and pre-PR gates</td><td><code>todo</code></td><td></td></tr>
@@ -247,6 +247,7 @@ skill is installable, all ledger rows are terminal, and cleanup finishes.</code>
 <section id="execution-log"><h2>Execution log</h2><table><thead><tr><th>Date</th><th>Item</th><th>Action</th><th>Evidence</th></tr></thead><tbody>
 <tr><td>2026-08-24</td><td>meta</td><td>activated</td><td>User expanded the request to the full adoption and agent DX outcome.</td></tr>
 <tr><td>2026-08-24</td><td>ADX1</td><td>review correction pushed</td><td>Commit 0ff3ed9 separates GitHub property and message data escapes.</td></tr>
+<tr><td>2026-08-24</td><td>ADX0</td><td>done</td><td>Commit 6c58b23 adds the active plan, research proof, and red verifier.</td></tr>
 </tbody></table></section>
 </main>
 </body>
