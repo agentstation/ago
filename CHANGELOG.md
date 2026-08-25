@@ -12,8 +12,29 @@ passed.
 
 ## [Unreleased]
 
+### Security
+
+- Require `golang.org/x/mod` v0.40.0, which fixes GO-2026-6179 and
+  GO-2026-6180. `ago` does not call the vulnerable `sumdb` symbols. Scorecard
+  still flags the module until this bump.
+- Escape `file=` and `title=` in `-format github`. A finding path can no
+  longer split a GitHub Actions workflow command.
+- Reject a `.ago.yml` larger than 1 MiB. Reject an `exclude` list longer
+  than 1024 patterns. Reject an empty exclude pattern and a pattern that
+  contains NUL. A config that excludes every package is an error, not a
+  clean run.
+- Add native Go fuzz tests for config load, exclude matching, ignore
+  directives, and GitHub output. CI runs them for 20s each.
+- Run `govulncheck` in CI.
+
+### Fixed
+
+- `.github/CODEOWNERS` named `@agentstation/maintainers`, a team that does
+  not exist. It now names `@jackspirou` and `@savkat`.
+
 ### Changed
 
+- Checkout steps set `persist-credentials: false`.
 - Developer-facing prose now follows the project's strict technical-writing
   rules. `GLOSSARY.md` and `.agents/technical-writing.toml` define the
   terms and the linter config. `make prose` runs the check.

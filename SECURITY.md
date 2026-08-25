@@ -7,6 +7,7 @@ older releases do not receive separate security support.
 
 ## Reporting a vulnerability
 
+Open a private advisory at https://github.com/agentstation/ago/security/advisories/new.
 Email `security@agentstation.ai`. Do not open a public issue for a suspected
 vulnerability.
 
@@ -44,3 +45,13 @@ Out of scope:
   upstream. We will pick up the fix on the next release.
 - A rule producing a false positive or a false negative. That is a correctness
   bug. Please file it as a normal issue.
+
+ago rejects a `.ago.yml` larger than 1 MiB and an `exclude` list longer than
+1024 patterns. A config that excludes every package is an error, not a clean
+run.
+
+## Security testing
+
+`make govulncheck` reports known vulnerabilities in the module graph.
+`make fuzz` runs the native Go fuzz tests for a bounded time.
+CI runs both on every pull request.

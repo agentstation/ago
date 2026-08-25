@@ -9,6 +9,9 @@
 coverage.txt
 ago.sarif
 
+# Generated Go fuzz corpus. Seed inputs live in f.Add calls.
+testdata/fuzz/
+
 # golangci-lint custom build
 /custom-gcl
 /.custom-gcl.yml

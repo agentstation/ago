@@ -18,6 +18,16 @@ import (
 const (
 	ConfigName    = ".ago.yml"
 	ConfigNameAlt = ".ago.yaml"
+
+	// maxConfigBytes is the largest config file ago will load. A larger file
+	// is an attack or a mistake, not a rule policy.
+	maxConfigBytes = 1 << 20
+	// maxExcludePatterns caps Config.Exclude.
+	maxExcludePatterns = 1024
+	// maxExcludePatternLen caps one exclude pattern.
+	maxExcludePatternLen = 4096
+	// maxRuleNames caps Enable and Disable together.
+	maxRuleNames = 4096
 )
 
 // A Config is the on-disk rule policy for a repository. A committed policy
@@ -61,7 +71,7 @@ func LoadConfig(dir, path string) (*Config, error) {
 		}
 		path = found
 	}
-	b, err := os.ReadFile(path) //nolint:gosec // reading the config path the user named is the point
+	b, err := readConfigBytes(path)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +87,26 @@ func LoadConfig(dir, path string) (*Config, error) {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
 	return cfg, nil
+}
+
+// readConfigBytes reads a config file. It fails when the file is larger than
+// maxConfigBytes.
+func readConfigBytes(path string) ([]byte, error) {
+	f, err := os.Open(path) //nolint:gosec // reading the config path the user named is the point
+	if err != nil {
+		return nil, err
+	}
+	b, err := io.ReadAll(io.LimitReader(f, maxConfigBytes+1))
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	if err != nil {
+		return nil, err
+	}
+	if len(b) > maxConfigBytes {
+		return nil, fmt.Errorf("%s: config exceeds %d bytes", path, maxConfigBytes)
+	}
+	return b, nil
 }
 
 // findConfig walks up from dir looking for a config file.
@@ -122,7 +152,27 @@ func (c *Config) Validate() error {
 	if err := check("enable", c.Enable); err != nil {
 		return err
 	}
-	return check("disable", c.Disable)
+	if err := check("disable", c.Disable); err != nil {
+		return err
+	}
+	if n := len(c.Enable) + len(c.Disable); n > maxRuleNames {
+		return fmt.Errorf("enable/disable: %d names; want at most %d", n, maxRuleNames)
+	}
+	if len(c.Exclude) > maxExcludePatterns {
+		return fmt.Errorf("exclude: %d patterns; want at most %d", len(c.Exclude), maxExcludePatterns)
+	}
+	for _, p := range c.Exclude {
+		if p == "" {
+			return fmt.Errorf("exclude: empty pattern")
+		}
+		if len(p) > maxExcludePatternLen {
+			return fmt.Errorf("exclude: pattern exceeds %d bytes", maxExcludePatternLen)
+		}
+		if strings.ContainsRune(p, 0) {
+			return fmt.Errorf("exclude: pattern contains NUL")
+		}
+	}
+	return nil
 }
 
 // Enabled resolves the config into the set of rules to run, sorted in

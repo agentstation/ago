@@ -204,7 +204,7 @@ func isOwnLineComment(pos token.Position, src []byte) bool {
 		return pos.Column == 1
 	}
 	start := pos.Offset - (pos.Column - 1)
-	if start < 0 || pos.Offset > len(src) {
+	if start < 0 || pos.Offset > len(src) || start > pos.Offset {
 		return pos.Column == 1
 	}
 	return strings.TrimSpace(string(src[start:pos.Offset])) == ""

@@ -145,3 +145,25 @@ func TestBrokenFileDoesNotHideFindings(t *testing.T) {
 		}
 	}
 }
+
+// TestExcludeAllIsAnError keeps a config that skips every package from looking
+// like a clean run. Exit status 0 with no findings would hide every violation.
+func TestExcludeAllIsAnError(t *testing.T) {
+	gotoRule, _ := Lookup("no-goto")
+	report := checkModule(t, "ignores", Options{
+		Rules:  []Rule{gotoRule},
+		Config: &Config{Exclude: []string{"*"}},
+	})
+	if len(report.Findings) != 0 {
+		t.Errorf("excluded packages still produced findings: %v", findingSet(t, report))
+	}
+	found := false
+	for _, e := range report.Errors {
+		if strings.Contains(e, "all packages excluded") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("errors = %v, want all packages excluded", report.Errors)
+	}
+}
