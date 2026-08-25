@@ -7,8 +7,13 @@
 
 **One way to write Go, no matter who writes it.**
 
-ago means *agent Go*: the Go that coding agents may write. The name also refers
-to an earlier, smaller Go.
+The name has three readings:
+
+- *agent Go*: the Go that coding agents may write.
+- *a Go*: one selected way to write Go for every human developer and coding
+  agent in a project.
+- *ago*: an earlier, smaller Go. It recalls the simpler language that inspired
+  the project, but it does not copy one past Go release.
 
 Go's original design called for [one way to write a piece of
 code](https://go.dev/talks/2015/gophercon-goevolution.slide). Rob Pike later
@@ -19,8 +24,8 @@ made the same point:
 > Rob Pike, [What We Got Right, What We Got
 > Wrong](https://commandcenter.blogspot.com/2024/01/what-we-got-right-what-we-got-wrong.html)
 
-`gofmt` gives Go one format. A project selects one way to write Go, and ago
-enforces it. Developers, coding agents, and CI use the same rules.
+`gofmt` gives Go one format. ago enforces a project's selected way to write Go.
+Human developers, coding agents, and CI use the same policy.
 
 `ago` rejects selected legal Go constructs. It does not add syntax, rewrite
 code, or change semantics. Code that passes `ago` is ordinary Go that builds
