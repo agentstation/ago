@@ -49,6 +49,30 @@ func TestGitHubFormatEscapesProperties(t *testing.T) {
 	}
 }
 
+func TestJSONReportIncludesSchemaVersion(t *testing.T) {
+	r := &Report{
+		SchemaVersion: ReportSchemaVersion,
+		Version:       "v1.2.3",
+		Rules:         []string{},
+		Findings:      []Finding{},
+		StaleIgnores:  []StaleIgnore{},
+		Errors:        []string{},
+	}
+	var buf bytes.Buffer
+	if err := r.Write(&buf, FormatJSON); err != nil {
+		t.Fatal(err)
+	}
+	var got struct {
+		SchemaVersion int `json:"schemaVersion"`
+	}
+	if err := json.Unmarshal(buf.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.SchemaVersion != ReportSchemaVersion {
+		t.Errorf("schemaVersion = %d, want %d", got.SchemaVersion, ReportSchemaVersion)
+	}
+}
+
 func TestGitHubFormatOneLinePerFinding(t *testing.T) {
 	r := &Report{Findings: []Finding{{
 		Rule:     "no-goto",

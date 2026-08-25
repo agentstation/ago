@@ -1,4 +1,7 @@
-// Command ago enforces a restricted subset of Go.
+// Command ago keeps one Go dialect across a codebase.
+//
+// A project selects the legal Go forms that it accepts. Developers and coding
+// agents run the same rule policy, and CI enforces it.
 //
 // ago only ever rejects language constructs. It never adds syntax, never
 // rewrites code, and never changes semantics. Code that passes ago is
@@ -30,7 +33,7 @@
 //
 //	-no-config        Ignore any .ago.yml on disk.
 //
-//	-init             Write a starter .ago.yml and exit.
+//	-init             Write an optional .ago.yml at the project root.
 //
 //	-stale-ignores    Report //ago:ignore directives that suppressed nothing.
 //
@@ -50,6 +53,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -70,7 +74,7 @@ func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
-func run(args []string, stdout, stderr *os.File) int {
+func run(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("ago", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	var (
@@ -82,17 +86,14 @@ func run(args []string, stdout, stderr *os.File) int {
 		formatFlag  = fs.String("format", "text", "output format: text, json, sarif, or github")
 		configFlag  = fs.String("config", "", "read this config instead of searching for .ago.yml")
 		noConfig    = fs.Bool("no-config", false, "ignore any .ago.yml on disk")
-		initFlag    = fs.Bool("init", false, "write a starter .ago.yml and exit")
+		initFlag    = fs.Bool("init", false, "write an optional .ago.yml at the project root and exit")
 		staleFlag   = fs.Bool("stale-ignores", false, "report //ago:ignore directives that suppressed nothing")
 		versionFlag = fs.Bool("version", false, "print the version and exit")
 	)
-	fs.SetOutput(stderr)
-	fs.Usage = func() { usage(stderr, fs) }
+	fs.Usage = func() { usage(stdout, fs) }
 	if err := fs.Parse(args); err != nil {
-		// -h is a request that succeeded, not a failed run. Print the help to
-		// stdout so a pipe can consume it, and exit clean.
+		// -h is a request that succeeded, not a failed run.
 		if errors.Is(err, flag.ErrHelp) {
-			usage(stdout, fs)
 			return exitClean
 		}
 		return exitError
@@ -103,7 +104,7 @@ func run(args []string, stdout, stderr *os.File) int {
 		fmt.Fprintf(stdout, "ago %s\n", ago.Version)
 		return exitClean
 	case *initFlag:
-		return writeInitConfig(stdout, stderr)
+		return writeInitConfig(".", stdout, stderr)
 	case *explainFlag != "":
 		return explain(stdout, stderr, *explainFlag)
 	}
@@ -130,12 +131,12 @@ func run(args []string, stdout, stderr *os.File) int {
 	}
 	rules := cfg.Enabled(overrides)
 	if len(rules) == 0 {
-		fmt.Fprintln(stderr, "ago: no rules enabled; check your -rules flag or .ago.yml")
+		fmt.Fprintln(stderr, "ago: no rules enabled; check the rule flags or policy config")
 		return exitError
 	}
 
 	if *listFlag {
-		listRules(stdout, format, rules)
+		listRules(stdout, format, rules, resolvedPolicy(cfg, overrides, *noConfig, *testsFlag))
 		return exitClean
 	}
 
@@ -237,15 +238,30 @@ func ruleOverrides(rulesFlag string, all bool) ([]string, error) {
 // listRules prints the rule set. In text form an asterisk marks the enabled
 // rules, so "ago -list" doubles as a check on what the current config
 // resolves to.
-func listRules(stdout *os.File, format ago.Format, enabled []ago.Rule) {
+func listRules(stdout io.Writer, format ago.Format, enabled []ago.Rule, policy policyJSON) {
 	on := map[string]bool{}
 	for _, r := range enabled {
 		on[r.Name] = true
 	}
 	if format == ago.FormatJSON {
-		writeRulesJSON(stdout, on)
+		writeRulesJSON(stdout, on, policy)
 		return
 	}
+	source := map[string]string{
+		"built-in": "built-in defaults",
+		"config":   "config file",
+		"flags":    "command-line flags",
+	}[policy.RuleSource]
+	fmt.Fprintf(stdout, "Policy: %s\n", source)
+	switch {
+	case policy.ConfigDisabled:
+		fmt.Fprintln(stdout, "Config: disabled by -no-config")
+	case policy.ConfigPath != "":
+		fmt.Fprintf(stdout, "Config: %s\n", policy.ConfigPath)
+	default:
+		fmt.Fprintln(stdout, "Config: none found")
+	}
+	fmt.Fprintf(stdout, "Tests:  %t\nExcludes: %d\n\n", policy.Tests, len(policy.Exclude))
 	width := 0
 	for _, r := range ago.Rules() {
 		if len(r.Name) > width {
@@ -281,11 +297,47 @@ type ruleJSON struct {
 	DocURL    string `json:"docURL"`
 }
 
-func writeRulesJSON(stdout *os.File, enabled map[string]bool) {
+// policyJSON records the inputs that resolved the active rule set.
+type policyJSON struct {
+	RuleSource     string   `json:"ruleSource"`
+	ConfigPath     string   `json:"configPath,omitempty"`
+	ConfigVersion  int      `json:"configVersion,omitempty"`
+	ConfigDisabled bool     `json:"configDisabled"`
+	Tests          bool     `json:"tests"`
+	Exclude        []string `json:"exclude"`
+}
+
+func resolvedPolicy(cfg *ago.Config, overrides []string, noConfig, testsFlag bool) policyJSON {
+	source := "built-in"
+	if cfg.Path() != "" {
+		source = "config"
+	}
+	if len(overrides) > 0 {
+		source = "flags"
+	}
+	configPath := cfg.Path()
+	if configPath != "" {
+		if abs, err := filepath.Abs(configPath); err == nil {
+			configPath = abs
+		}
+	}
+	return policyJSON{
+		RuleSource:     source,
+		ConfigPath:     configPath,
+		ConfigVersion:  cfg.Version,
+		ConfigDisabled: noConfig,
+		Tests:          testsFlag || cfg.Tests,
+		Exclude:        append([]string{}, cfg.Exclude...),
+	}
+}
+
+func writeRulesJSON(stdout io.Writer, enabled map[string]bool, policy policyJSON) {
 	out := struct {
-		Version string     `json:"version"`
-		Rules   []ruleJSON `json:"rules"`
-	}{Version: ago.Version}
+		SchemaVersion int        `json:"schemaVersion"`
+		Version       string     `json:"version"`
+		Policy        policyJSON `json:"policy"`
+		Rules         []ruleJSON `json:"rules"`
+	}{SchemaVersion: ruleCatalogueSchemaVersion, Version: ago.Version, Policy: policy}
 	for _, r := range ago.Rules() {
 		out.Rules = append(out.Rules, ruleJSON{
 			Name:      r.Name,
@@ -302,8 +354,10 @@ func writeRulesJSON(stdout *os.File, enabled map[string]bool) {
 	encodeJSON(stdout, out)
 }
 
+const ruleCatalogueSchemaVersion = 1
+
 // explain prints one rule's full rationale.
-func explain(stdout, stderr *os.File, name string) int {
+func explain(stdout, stderr io.Writer, name string) int {
 	r, ok := ago.Lookup(name)
 	if !ok {
 		fmt.Fprintf(stderr, "ago: unknown rule %q\n", name)
@@ -324,7 +378,7 @@ func explain(stdout, stderr *os.File, name string) int {
 }
 
 // suggest prints the rules whose names share a prefix with a misspelling.
-func suggest(stderr *os.File, name string) {
+func suggest(stderr io.Writer, name string) {
 	var near []string
 	for _, n := range ago.Names() {
 		if strings.Contains(n, name) || strings.Contains(name, n) {
@@ -339,29 +393,73 @@ func suggest(stderr *os.File, name string) {
 	fmt.Fprintln(stderr, `ago: run "ago -list" for the rule set`)
 }
 
-// writeInitConfig writes a starter config, refusing to clobber an existing
-// one.
-func writeInitConfig(stdout, stderr *os.File) int {
-	path := ago.ConfigName
-	if _, err := os.Stat(path); err == nil {
-		fmt.Fprintf(stderr, "ago: %s already exists\n", path)
-		return exitError
-	}
-	// A config the whole team commits and reads is 0644.
-	if err := os.WriteFile(path, []byte(ago.ExampleConfig()), 0o644); err != nil { //nolint:gosec // team-readable by design
+// writeInitConfig writes a minimal policy at the nearest Go module or
+// workspace root. It refuses to create a second policy below one that already
+// applies.
+func writeInitConfig(dir string, stdout, stderr io.Writer) int {
+	cfg, err := ago.LoadConfig(dir, "")
+	if err != nil {
 		fmt.Fprintf(stderr, "ago: %v\n", err)
 		return exitError
 	}
-	abs, err := filepath.Abs(path)
-	if err != nil {
-		abs = path
+	if cfg.Path() != "" {
+		fmt.Fprintf(stderr, "ago: policy already exists: %s\n", cfg.Path())
+		return exitError
 	}
-	fmt.Fprintf(stdout, "wrote %s\n", abs)
+	root, marker, err := findProjectRoot(dir)
+	if err != nil {
+		fmt.Fprintf(stderr, "ago: %v\n", err)
+		return exitError
+	}
+	path := filepath.Join(root, ago.ConfigName)
+	// A config the whole team commits and reads is 0644.
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644) //nolint:gosec // team-readable by design
+	if err != nil {
+		fmt.Fprintf(stderr, "ago: %v\n", err)
+		return exitError
+	}
+	removeOnError := true
+	defer func() {
+		if removeOnError {
+			_ = os.Remove(path)
+		}
+	}()
+	if _, err := io.WriteString(f, ago.ExampleConfig()); err != nil {
+		_ = f.Close()
+		fmt.Fprintf(stderr, "ago: writing %s: %v\n", path, err)
+		return exitError
+	}
+	if err := f.Close(); err != nil {
+		fmt.Fprintf(stderr, "ago: writing %s: %v\n", path, err)
+		return exitError
+	}
+	removeOnError = false
+	fmt.Fprintf(stdout, "wrote %s at %s root\n", path, marker)
 	return exitClean
 }
 
-func usage(stderr *os.File, fs *flag.FlagSet) {
-	fmt.Fprint(stderr, `ago enforces a restricted subset of Go.
+func findProjectRoot(dir string) (string, string, error) {
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return "", "", err
+	}
+	for {
+		for _, marker := range []string{"go.mod", "go.work"} {
+			path := filepath.Join(abs, marker)
+			if info, err := os.Stat(path); err == nil && !info.IsDir() {
+				return abs, marker, nil
+			}
+		}
+		parent := filepath.Dir(abs)
+		if parent == abs {
+			return "", "", fmt.Errorf("cannot find a go.mod or go.work above %s", dir)
+		}
+		abs = parent
+	}
+}
+
+func usage(w io.Writer, fs *flag.FlagSet) {
+	fmt.Fprint(w, `ago keeps one Go dialect across a codebase.
 
 Usage:
   ago [flags] [packages]
@@ -371,8 +469,9 @@ With no arguments ago checks ./... under the working directory.
 
 Flags:
 `)
+	fs.SetOutput(w)
 	fs.PrintDefaults()
-	fmt.Fprint(stderr, `
+	fmt.Fprint(w, `
 Exit status:
   0  no violations
   1  at least one violation

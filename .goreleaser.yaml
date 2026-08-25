@@ -42,6 +42,7 @@ archives:
     files:
       - README.md
       - CHANGELOG.md
+      - ago.schema.json
       - COPYRIGHT
       - LICENSE-MIT
       - LICENSE-APACHE
@@ -65,7 +66,7 @@ homebrew_casks:
       email: "actions@github.com"
     commit_msg_template: "Update ago to {{ .Tag }}"
     homepage: https://github.com/agentstation/ago
-    description: A restriction-only linter for Go
+    description: Keep one Go dialect across a codebase
     binaries:
       - ago
     hooks:
@@ -97,8 +98,11 @@ changelog:
       - '^chore:'
       - '^style:'
       - '^refactor:'
-      - Merge pull request
-      - Merge branch
+      - '^plan:'
+      - '^revert:'
+      - '^Revert '
+      - '^Guard '
+      - '^Merge '
   groups:
     - title: New and changed rules
       regexp: '^.*?feat\(rules?\)!?:.+$'
@@ -124,12 +128,18 @@ release:
     name: ago
   name_template: "ago {{ .Tag }}"
   header: |
-    `ago` is a restriction-only linter for Go. Every rule rejects a legal
-    language construct; none adds syntax or rewrites code.
+    `ago` keeps one Go dialect across a codebase. Developers, coding agents,
+    and CI use the same configurable Go subset.
 
     ```sh
-    brew install agentstation/tap/ago
+    go get -tool github.com/agentstation/ago/cmd/ago@latest
+    go tool ago ./...
     ```
+
+    A config file is optional. The pinned version supplies the default policy.
+
+    Global installs remain available through `go install`, Homebrew, and the
+    release archives below.
 
     Verify downloaded archives against `checksums.txt`. Each archive ships an
     SBOM alongside it.

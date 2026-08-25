@@ -5,11 +5,18 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/agentstation/ago)](https://goreportcard.com/report/github.com/agentstation/ago)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
 
-A restriction-only linter for Go.
+**One Go dialect for the whole codebase.**
 
-Go permits several forms for some operations. ago lets a project select
-accepted forms and gives developers, coding agents, and CI the same executable
-policy.
+Go's productive kind of boring comes from familiarity. The original design put
+simplicity, readability, and one common form ahead of extra choice. Uniform Go
+code also helps teams read and maintain code across authors. See [Go design
+history](https://go.dev/talks/2015/gophercon-goevolution.slide) and [Go at
+Google](https://go.dev/talks/2012/splash.article).
+
+As Go gains more legal forms, ago lets a project select the forms it accepts.
+Developers and coding agents run the same policy, and CI enforces it. Where
+`gofmt` standardizes presentation, ago standardizes the accepted language
+subset.
 
 `ago` rejects selected legal Go constructs. It does not add syntax, rewrite
 code, or change semantics. Code that passes `ago` is ordinary Go that builds
@@ -22,9 +29,9 @@ internal/store/index.go:88:9: new() takes a type, not an expression (no-new-expr
 2 violations
 ```
 
-The name reads as *a-go*, the Go subset an agent may write. It also reads as
-*ago*, the Go that earlier toolchains accepted. Read the [design
-case](docs/design.md) for the project boundary and evidence.
+The name reads as *a-go*, the Go subset that a project accepts. It also refers
+to an earlier, smaller Go language. Read the [design case](docs/design.md) for
+the project boundary and evidence.
 
 ## Adopt ago in a Go repository
 
@@ -36,18 +43,10 @@ ago requires Go 1.25 or later and a Go module.
    go get -tool github.com/agentstation/ago/cmd/ago@latest
    ```
 
-   This command records an exact ago version in `go.mod` and `go.sum`.
+   This command pins the ago version in `go.mod`. It records module checksums
+   in `go.sum`.
 
-2. Write the starter rule policy.
-
-   ```sh
-   go tool ago -init
-   ```
-
-   This command creates `.ago.yml`. Edit the file, then commit it with
-   `go.mod` and `go.sum`.
-
-3. Check the module.
+2. Check the module.
 
    ```sh
    go tool ago ./...
@@ -57,6 +56,10 @@ ago requires Go 1.25 or later and a Go module.
 
 The Go module now owns the ago version. Developers, coding agents, and CI can
 run `go tool ago` without a global installation or a `PATH` change.
+
+ago does not require a config file. The pinned ago version supplies the default
+rule policy. Add `.ago.yml` only when the project needs a different policy.
+Run the same `go get -tool` command later to upgrade ago deliberately.
 
 ### Other installation methods
 
@@ -77,21 +80,23 @@ the [release page](https://github.com/agentstation/ago/releases).
 
 ## Make the policy automatic
 
-Four repository files make the policy repeatable:
+Use these repository files to give each contributor the same command and
+policy:
 
-| File | Contract |
-| --- | --- |
-| `go.mod` | Pins the ago command version. |
-| `.ago.yml` | Selects the rule policy. |
-| `AGENTS.md` | Tells coding agents when and how to run the policy. |
-| CI workflow | Rejects a change that violates the policy. |
+| File | Purpose | When needed |
+| --- | --- | --- |
+| `go.mod` and `go.sum` | Pin the ago command and its module graph. | Always |
+| `.ago.yml` | Change or record the built-in rule policy. | Only for a custom policy |
+| `AGENTS.md` | Tell coding agents when and how to run ago. | Repositories that use coding agents |
+| CI workflow | Reject a change that violates the policy. | Repositories that enforce ago |
 
 Add this instruction to the adopting repository's `AGENTS.md`:
 
 ```markdown
 Run `go tool ago -stale-ignores -format json ./...` after each Go change.
-Fix findings in source. Do not change `.ago.yml` or add a suppression only to
-make the run pass. Exit status 2 means the check was incomplete.
+Fix findings in source. Do not add or change `.ago.yml` only to make the run
+pass. Do not add a suppression only to make the run pass. Exit status 2 means
+the check was incomplete.
 ```
 
 Use the same pinned tool in GitHub Actions:
@@ -131,9 +136,20 @@ restrict.
 
 ## Configure the rule policy
 
-ago reads `.ago.yml` from the working directory or the nearest parent.
+Configuration is optional. With no config file, ago runs the default rules from
+the version pinned in `go.mod`.
+
+Create a minimal policy only when the project needs one:
+
+```sh
+go tool ago -init
+```
+
+The command writes `.ago.yml` at the nearest `go.mod` or `go.work` root. It
+refuses to create a second policy when a parent policy already applies.
 
 ```yaml
+version: 1
 enable:
   - default
   - no-init-func
@@ -150,6 +166,14 @@ exclude:
 `enable` accepts rule names and the meta-names `default` and `all`. `disable`
 wins over `enable`. Command flags `-rules` and `-all` override the file.
 
+Choose the policy form that matches the project:
+
+| Form | Upgrade behavior |
+| --- | --- |
+| No `.ago.yml` | Use the defaults in the pinned ago version. |
+| `enable: [default]` | Record a policy file and use the defaults in the pinned version. |
+| Explicit rule names | Keep the named rule set until the project edits the file. |
+
 ago matches each `exclude` pattern against three path shapes:
 
 - the complete slash-separated path.
@@ -161,7 +185,8 @@ depth, and `third_party/*` matches that subtree.
 
 Unknown keys and unknown rule names stop the run. A policy typo cannot disable
 a rule silently. Use `-config path` to name a file. Use `-no-config` to ignore
-all policy files.
+all policy files. The [JSON Schema](ago.schema.json) supplies editor validation.
+ago also accepts unversioned files created by v0.1.
 
 ## Fix or suppress a finding
 
@@ -195,8 +220,13 @@ Discover the active rules:
 go tool ago -list -format json
 ```
 
-Each catalogue entry includes its name, analyzer ident, summary, rationale,
-default and active state, Go release boundary, severity, and documentation URL.
+The document includes a schema version and the resolved policy source. It also
+reports the config path, test setting, and exclude patterns. Each rule entry
+includes its name, analyzer ident, summary, rationale, default and active state,
+Go release boundary, severity, and documentation URL.
+
+`policy.ruleSource` is `built-in`, `config`, or `flags`. `configDisabled` is
+true when the command used `-no-config`.
 
 Read findings and incomplete-run errors:
 
@@ -206,6 +236,7 @@ go tool ago -stale-ignores -format json ./...
 
 ```json
 {
+  "schemaVersion": 1,
   "version": "v0.1.1",
   "rules": ["no-dot-import", "no-goto", "no-naked-return"],
   "findings": [
@@ -227,7 +258,7 @@ go tool ago -stale-ignores -format json ./...
 ```
 
 ago sorts and deduplicates findings. The same version, policy, and source tree
-produce identical JSON bytes. Existing JSON fields keep their names and
+produce the same JSON document. Existing JSON fields keep their names and
 meanings. Later versions can add fields.
 
 A package load or parse failure appears in `errors`. ago continues with each
@@ -243,9 +274,9 @@ suppression, and verification loop:
 gh skill install agentstation/skills ago --agent codex --scope project
 ```
 
-Change `--agent` for another supported host. The skill is an aid, not an
-enforcement mechanism. The committed Go tool, policy, agent instruction, and
-CI workflow remain authoritative.
+Change `--agent` for another supported host. The skill guides the local repair
+loop. The pinned Go tool, optional policy, agent instruction, and CI workflow
+remain authoritative.
 
 ## Rules
 
@@ -346,6 +377,7 @@ Run `golangci-lint custom`, then enable the `ago` custom linter in
 
 - [Design and scope](docs/design.md)
 - [Rule reference](docs/rules.md)
+- [Config schema](ago.schema.json)
 - [Contributing](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Changelog](CHANGELOG.md)

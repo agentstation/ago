@@ -47,6 +47,8 @@ func ParseFormat(s string) (Format, error) {
 // is ago's machine-readable contract. Fields grow over time but existing
 // fields keep their name and meaning.
 type Report struct {
+	// SchemaVersion is the JSON report schema version.
+	SchemaVersion int `json:"schemaVersion"`
 	// Version is the ago version that produced the report.
 	Version string `json:"version"`
 	// Rules lists the canonical names of the rules that ran, sorted.
@@ -59,6 +61,9 @@ type Report struct {
 	// did not finish and Findings may omit violations.
 	Errors []string `json:"errors"`
 }
+
+// ReportSchemaVersion is the current JSON report schema version.
+const ReportSchemaVersion = 1
 
 // A StaleIgnore is a suppression directive that matched no finding. The
 // command reports it separately from Findings because it is a maintenance

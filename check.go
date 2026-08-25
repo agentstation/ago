@@ -46,11 +46,12 @@ func Check(opts Options) (*Report, error) {
 	}
 
 	report := &Report{
-		Version:      Version,
-		Rules:        sortedNames(rules),
-		Findings:     []Finding{},
-		StaleIgnores: []StaleIgnore{},
-		Errors:       []string{},
+		SchemaVersion: ReportSchemaVersion,
+		Version:       Version,
+		Rules:         sortedNames(rules),
+		Findings:      []Finding{},
+		StaleIgnores:  []StaleIgnore{},
+		Errors:        []string{},
 	}
 
 	cfg := &packages.Config{
