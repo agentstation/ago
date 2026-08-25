@@ -12,7 +12,6 @@ when they match a row.
 | finding | One reported violation of a rule | | approved | finding.go, README.md |
 | fixture | A `testdata` package that records expected findings and non-findings | | approved | CONTRIBUTING.md |
 | golangci-lint | The Go linter runner that loads `ago` as a module plugin | | approved | README.md, plugin/golangci/plugin.go |
-| load-bearing | A use of `:=` where `var` is a syntax error or would widen scope | | approved | README.md, rule_declarations.go |
 | meta-name | The `enable` values `default` and `all` | | approved | README.md, config.go |
 | naked return | A `return` with no operands in a function with named results | | approved | README.md, rule_declarations.go |
 | near-miss | A neighbouring construct the rule must not report | | approved | CONTRIBUTING.md |

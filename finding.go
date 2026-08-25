@@ -34,8 +34,8 @@ func (f Finding) Position() string {
 	return token.Position{Filename: f.File, Line: f.Line, Column: f.Column}.String()
 }
 
-// sortFindings orders findings by file, then line, then column, then rule, so
-// that output is byte-identical across runs and diffable in CI.
+// sortFindings orders findings by file, then line, then column, then rule. This
+// order produces the same output bytes across runs and supports CI diffs.
 func sortFindings(fs []Finding) {
 	sort.SliceStable(fs, func(i, j int) bool {
 		a, b := fs[i], fs[j]

@@ -10,8 +10,8 @@ func Var() int {
 	return n
 }
 
-// := is load-bearing in these positions and is not reported.
-func LoadBearing(xs []int, x any) int {
+// The rule does not report := in positions where var is invalid or changes scope.
+func RequiredShortDeclaration(xs []int, x any) int {
 	total := 0 // want `short declaration in plain statement position`
 	for i, v := range xs {
 		total += i + v

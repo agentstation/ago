@@ -94,8 +94,8 @@ func TestStaleIgnoresOffByDefault(t *testing.T) {
 	}
 }
 
-// TestDeterministicOrder checks that two runs over the same tree produce
-// byte-identical output, which CI diffing and agent parsing both depend on.
+// TestDeterministicOrder checks that two runs over the same tree produce the
+// same output bytes, which CI diffs and coding-agent parsers require.
 func TestDeterministicOrder(t *testing.T) {
 	gotoRule, _ := Lookup("no-goto")
 	invalid, _ := Lookup("no-invalid-ignore")

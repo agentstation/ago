@@ -128,15 +128,16 @@ Those packages often exist for callers to import.
 This rule provides one way to introduce a variable. It reports `:=` only in a
 plain statement where `var` is a direct replacement.
 
-The rule does not report a load-bearing short declaration:
+The rule does not report a short declaration where `var` is invalid:
 
 ```go
 switch t := x.(type) { ... }   // var is not allowed in a switch guard
 for i, v := range xs { ... }   // no var form exists
+select { case v := <-ch: ... } // var is not allowed in a receive clause
 ```
 
-It also does not report declarations in `if` and `for` headers. Moving those
-declarations before the statement would widen their scope.
+It also does not report declarations in `if`, `for`, and `switch` headers.
+Moving those declarations before the statement would widen their scope.
 
 The standard library uses `:=` in 2,522 of 3,916 non-test files. Enable this
 rule only when the project chooses this declaration policy.
