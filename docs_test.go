@@ -9,24 +9,28 @@ import (
 
 var headingRE = regexp.MustCompile(`(?m)^#{1,6}\s+(.*)$`)
 
-// Every rule's DocURL points at a README anchor. GitHub derives that anchor
-// from a heading. A rule added without a heading ships a link that 404s.
-// The JSON catalogue hands that link to coding agents.
-func TestEveryRuleHasAReadmeAnchor(t *testing.T) {
-	readme, err := os.ReadFile("README.md")
+// Every rule's DocURL points at a rule-reference anchor. GitHub derives that
+// anchor from a heading. A rule added without a heading ships a broken link.
+// The JSON catalogue gives that link to coding agents.
+func TestEveryRuleHasADocAnchor(t *testing.T) {
+	doc, err := os.ReadFile("docs/rules.md")
 	if err != nil {
-		t.Fatalf("read README.md: %v", err)
+		t.Fatalf("read docs/rules.md: %v", err)
 	}
 
 	anchors := map[string]bool{}
-	for _, m := range headingRE.FindAllStringSubmatch(string(readme), -1) {
+	for _, m := range headingRE.FindAllStringSubmatch(string(doc), -1) {
 		anchors[slugify(m[1])] = true
 	}
 
 	for _, rule := range Rules() {
 		if !anchors[rule.Name] {
-			t.Errorf("rule %q has no README heading; DocURL %s would not resolve",
+			t.Errorf("rule %q has no documentation heading; DocURL %s would not resolve",
 				rule.Name, rule.DocURL())
+		}
+		if rule.Analyzer.URL != rule.DocURL() {
+			t.Errorf("rule %q analyzer URL = %q, want %q",
+				rule.Name, rule.Analyzer.URL, rule.DocURL())
 		}
 	}
 }
@@ -47,24 +51,24 @@ func slugify(heading string) string {
 	return b.String()
 }
 
-// The README documents each rule's default state. A rule whose default flips
-// without a README change is a documentation bug that only a reader would
-// catch. Assert the counts agree with the "On by default" section.
-func TestDefaultRuleCountMatchesReadme(t *testing.T) {
-	readme, err := os.ReadFile("README.md")
+// The rule reference documents each rule's default state. A rule whose default
+// flips without a documentation change is a defect. Assert that the sections
+// agree with the registry.
+func TestDefaultRuleCountMatchesDocs(t *testing.T) {
+	doc, err := os.ReadFile("docs/rules.md")
 	if err != nil {
-		t.Fatalf("read README.md: %v", err)
+		t.Fatalf("read docs/rules.md: %v", err)
 	}
 
-	body := string(readme)
-	on := section(body, "### On by default", "### Off by default")
-	off := section(body, "### Off by default", "## Configuration")
+	body := string(doc)
+	on := section(body, "## On by default", "## Off by default")
+	off := section(body, "## Off by default", "")
 	if on == "" || off == "" {
-		t.Fatal("README is missing the On/Off by default sections")
+		t.Fatal("docs/rules.md is missing the On/Off by default sections")
 	}
 
 	for _, rule := range Rules() {
-		heading := "#### `" + rule.Name + "`"
+		heading := "### `" + rule.Name + "`"
 		inOn := strings.Contains(on, heading)
 		inOff := strings.Contains(off, heading)
 		switch {
@@ -86,8 +90,10 @@ func section(body, start, end string) string {
 		return ""
 	}
 	rest := body[i+len(start):]
-	if j := strings.Index(rest, end); j >= 0 {
-		return rest[:j]
+	if end != "" {
+		if j := strings.Index(rest, end); j >= 0 {
+			return rest[:j]
+		}
 	}
 	return rest
 }

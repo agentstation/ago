@@ -95,7 +95,7 @@ func (ix *ignoreIndex) suppressed(fset *token.FileSet, pos token.Pos, rule strin
 var ignoresAnalyzer = &analysis.Analyzer{
 	Name:       "agoignores",
 	Doc:        "collect //ago:ignore directives for the other ago analyzers",
-	URL:        "https://github.com/agentstation/ago#suppressing-a-rule",
+	URL:        "https://github.com/agentstation/ago#fix-or-suppress-a-finding",
 	Run:        runIgnores,
 	ResultType: reflectTypeOfIgnoreIndex,
 }

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ago adoption and agent DX plan</title>
+<style>
+  :root { --ink:#17202a; --muted:#5d6875; --line:#d6dce3; --soft:#f4f6f8;
+    --page:#fff; --accent:#2457d6; --done:#16803c; --blocked:#b42318; }
+  @media (prefers-color-scheme:dark) { :root { --ink:#e6eaf0; --muted:#9ca6b2;
+    --line:#343c46; --soft:#1b2128; --page:#11161c; --accent:#71a0ff;
+    --done:#59d17d; --blocked:#ff7b72; } }
+  * { box-sizing:border-box; } body { margin:0 auto; padding:2rem 1.25rem 4rem;
+    max-width:1080px; background:var(--page); color:var(--ink);
+    font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  h1 { font-size:1.65rem; margin:0 0 .25rem; } h2 { font-size:1.16rem;
+    margin:2rem 0 .5rem; border-bottom:1px solid var(--line); padding-bottom:.25rem; }
+  h3 { font-size:1rem; margin:1.25rem 0 .35rem; } code { background:var(--soft);
+    border:1px solid var(--line); border-radius:4px; padding:.05rem .3rem; }
+  pre { background:var(--soft); border:1px solid var(--line); border-radius:6px;
+    padding:.9rem 1rem; overflow:auto; } pre code { border:0; padding:0; }
+  blockquote { margin:.75rem 0; padding:.65rem 1rem; border-left:3px solid var(--accent);
+    background:var(--soft); } table { border-collapse:collapse; width:100%;
+    margin:.75rem 0; font-size:.92rem; } th,td { border:1px solid var(--line);
+    padding:.38rem .55rem; text-align:left; vertical-align:top; } th { background:var(--soft); }
+  #status-line,.counts { color:var(--muted); font-size:.92rem; } .bar { height:.75rem;
+    border:1px solid var(--line); border-radius:999px; overflow:hidden; background:var(--soft); }
+  .fill { height:100%; width:0; background:var(--done); } .pair { display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1rem; }
+  figure { margin:0; border:1px solid var(--line); border-radius:8px;
+    padding:.8rem; background:var(--soft); } figcaption { font-weight:650; }
+  tr[data-status="done"] td:nth-child(3) code { color:var(--done); }
+  tr[data-status="blocked"] td:nth-child(3) code { color:var(--blocked); }
+  tr[data-status="in_progress"] td:nth-child(3) code { color:var(--accent); }
+</style>
+<script>
+document.addEventListener("DOMContentLoaded",function(){var rows=document.querySelectorAll("#ledger tbody tr");
+var terminal={done:1,"no-action":1,rejected:1},closed=0,current="";rows.forEach(function(row){
+var status=(row.getAttribute("data-status")||"").split("(")[0];if(terminal[status])closed++;
+if(status==="in_progress"&&!current)current=row.id+" "+row.cells[1].textContent.trim();});
+var pct=rows.length?Math.round(closed/rows.length*100):0;document.querySelector(".fill").style.width=pct+"%";
+document.querySelector(".counts").textContent=closed+" of "+rows.length+" tasks terminal ("+pct+"%)."+
+(current?" In progress: "+current:"");});
+</script>
+</head>
+<body>
+<header id="overview">
+  <h1>ago adoption and agent DX</h1>
+  <p id="status-line">Status: <code data-plan-status="active">active</code>.<br>
+    Owner: this plan. Created: 2026-08-24. Baseline: main @ c085a53.<br>
+    Proof root: <code>proof/ago-adoption-dx/</code>.<br>
+    Next action: rewrite README around the pinned Go tool adoption path.</p>
+  <section id="outcome"><h2>Outcome</h2><blockquote>
+    A Go repository can pin ago with the Go module and state its rule policy in
+    <code>.ago.yml</code>. Coding agents and CI run the same stable command. The
+    published module has visible package documentation, recognized licenses,
+    accurate integration claims, and one optional reusable skill.
+  </blockquote></section>
+  <section id="progress"><h2>Progress</h2><div class="bar"><div class="fill"></div></div>
+    <p class="counts">The ledger supplies progress.</p></section>
+  <section id="architecture"><h2>Architecture</h2><div class="pair">
+    <figure><figcaption>Before</figcaption><pre><code>global install or Homebrew
+        |
+        v
+PATH-dependent ago command
+
+README mixes adoption and reference
+LICENSE pointer -> pkg.go.dev UNKNOWN
+agent setup requires copied prose</code></pre></figure>
+    <figure><figcaption>After</figcaption><pre><code>go.mod tool directive ----> go tool ago
+        |                         |
+        +-> .ago.yml policy       +-> JSON catalogue
+        +-> AGENTS.md command     +-> stable exit codes
+        +-> CI enforcement
+
+recognized root license files
+task-led README + optional ago skill</code></pre></figure>
+  </div></section>
+</header>
+<main>
+<section id="scope"><h2>Scope</h2>
+  <p><strong>Owns:</strong> pull request 2 review closure, license layout, package
+    publication, release version, README, and Go-native adoption guidance. It also owns
+    downstream agent instructions and an optional skill in <code>agentstation/skills</code>.</p>
+  <p><strong>Does not own:</strong> new lint rules, a hosted documentation site, editor
+    extensions, a new GitHub Action, or changes to the Go command.</p>
+  <p><strong>Non-goals:</strong> make third-party checks run implicitly inside stock
+    <code>go test</code> or <code>go vet</code>. Do not bypass branch protection. Do not
+    write <code>llms.txt</code> without a documentation website for agents.</p>
+</section>
+<section id="invariants"><h2>Invariants</h2><ol>
+  <li>The primary install is version-pinned in the adopting repository.</li>
+  <li>Humans, coding agents, local checks, and CI run the same command and policy.</li>
+  <li>The command does not edit existing agent instructions or CI without explicit input.</li>
+  <li>Machine output and exit codes remain stable contracts.</li>
+  <li>Every license file that pkg.go.dev scans contains a recognized license.</li>
+</ol></section>
+<section id="decisions"><h2>Decisions</h2>
+  <p><strong>D1, 2026-08-24:</strong> make <code>go get -tool</code> and
+    <code>go tool ago</code> the primary path. Go supports module tool dependencies
+    since 1.24. ago requires Go 1.25.</p>
+  <p><strong>D2, 2026-08-24:</strong> use <code>AGENTS.md</code> for the required command.
+    Keep the reusable skill optional and publish it from <code>agentstation/skills</code>.</p>
+  <p><strong>D3, 2026-08-24:</strong> do not add <code>llms.txt</code>. Its contract maps a
+    website. Repository agents already discover <code>AGENTS.md</code>, skills, Go package
+    docs, and command JSON.</p>
+</section>
+<section id="ledger"><h2>Status ledger</h2><table><thead><tr><th>ID</th><th>Task</th><th>Status</th><th>Evidence</th></tr></thead><tbody>
+<tr id="ADX0" data-status="done"><td>ADX0</td><td>Baseline research and verifier</td><td><code>done</code></td><td>Commit 6c58b23. Verifier records 4 failing and 1 passing conditions. See proof/ago-adoption-dx/adx0.md.</td></tr>
+<tr id="ADX1" data-status="blocked"><td>ADX1</td><td>Close pull request 2 review and merge</td><td><code>blocked(external approval)</code></td><td>Correction 0ff3ed9 pushed. GitHub requires a different reviewer.</td></tr>
+<tr id="ADX2" data-status="blocked"><td>ADX2</td><td>Repair license detection and publish a patch release</td><td><code>blocked(final merge and release)</code></td><td>Commit 9447506. licensecheck reports Apache-2.0 at 100.0% and MIT at 98.8%. Local checks pass.</td></tr>
+<tr id="ADX3" data-status="done"><td>ADX3</td><td>Rewrite README around adoption tasks and Go tools</td><td><code>done</code></td><td>Commit 3b8d5bb. Clean-module setup, version output, links, Go checks, and strict prose pass. See proof/ago-adoption-dx/adx3.md.</td></tr>
+<tr id="ADX4" data-status="done"><td>ADX4</td><td>Publish the optional ago Agent Skill</td><td><code>done</code></td><td>agentstation/skills PR 6 merged as 83a41ea. Skill validation, publication dry run, strict prose, and local installation pass.</td></tr>
+<tr id="ADX5" data-status="done"><td>ADX5</td><td>Run release, documentation, and pre-PR gates</td><td><code>done</code></td><td>All local gates pass. Isolated Sol high autoreview reports no accepted or actionable findings and stores a clean attestation.</td></tr>
+<tr id="ADX9" data-status="todo"><td>ADX9</td><td>Cleanup after the final pull request merges</td><td><code>todo</code></td><td></td></tr>
+</tbody></table></section>
+<section id="tasks"><h2>Tasks</h2>
+  <h3 id="task-ADX0">ADX0 Baseline research and verifier</h3><ul>
+    <li><strong>Problem:</strong> current claims and adoption failures need measured evidence.</li>
+
+    <li><strong>Owning seam and paths:</strong> this plan and <code>proof/ago-adoption-dx/</code>.</li>
+
+    <li><strong>Steps:</strong> capture live pkg.go.dev state, license classifiers, Go tool
+      guidance, agent discovery conventions, README defects, and the pull request state.</li>
+
+    <li><strong>Acceptance:</strong> the verifier names each red condition and the proof file
+      links each design decision to primary evidence.</li>
+
+    <li><strong>Fail-before:</strong> verifier reports UNKNOWN license, missing Go tool
+      adoption, incorrect vet-tool claim, and invalid library example.</li>
+
+    <li><strong>Verification:</strong> run <code>proof/ago-adoption-dx/verify.sh</code>.</li>
+  </ul>
+  <h3 id="task-ADX1">ADX1 Close pull request 2 review and merge</h3><ul>
+    <li><strong>Problem:</strong> PR 2 needs an independent review and one encoder correction.</li>
+
+    <li><strong>Owning seam and paths:</strong> PR 2, <code>report.go</code>, and
+      <code>report_test.go</code>.</li>
+
+    <li><strong>Steps:</strong> keep property and data escape contracts separate and run checks.
+      Get a review from a different GitHub user. Merge through branch protection.</li>
+
+    <li><strong>Acceptance:</strong> all checks pass, a different reviewer approves the change,
+      and PR 2 merges.</li>
+
+    <li><strong>Fail-before:</strong> message data incorrectly encodes colons and commas.</li>
+
+    <li><strong>Verification:</strong> <code>make check</code>, <code>make prose</code>, and
+      <code>gh pr view 2 --json state,reviewDecision,statusCheckRollup</code>.</li>
+  </ul>
+  <h3 id="task-ADX2">ADX2 Repair license detection and publish a patch release</h3><ul>
+    <li><strong>Problem:</strong> pkg.go.dev classifies the pointer file as UNKNOWN and hides docs.</li>
+
+    <li><strong>Owning seam and paths:</strong> root license files, release workflow, and Go proxy.</li>
+
+    <li><strong>Steps:</strong> keep the dual grant outside pkg.go.dev license filenames, retain
+      exact Apache and MIT texts, test the published archive, merge, and release the next patch.</li>
+
+    <li><strong>Acceptance:</strong> the Go proxy serves the patch release. pkg.go.dev shows
+      package docs and only recognized licenses.</li>
+
+    <li><strong>Fail-before:</strong> v0.1.0 reports UNKNOWN, Apache-2.0, and MIT.</li>
+
+    <li><strong>Verification:</strong> inspect proxy list, pkg.go.dev HTML, and GitHub license API.</li>
+  </ul>
+  <h3 id="task-ADX3">ADX3 Rewrite README around adoption tasks and Go tools</h3><ul>
+    <li><strong>Problem:</strong> the current README delays adoption and contains an invalid API
+      call. It does not lead with the repository-pinned Go tool path.</li>
+
+    <li><strong>Owning seam and paths:</strong> <code>README.md</code>, package docs, and examples.</li>
+
+    <li><strong>Steps:</strong> write a human quick start, one-command agent loop, policy setup,
+      CI contract, integration reference, rule reference, and accurate library example.</li>
+
+    <li><strong>Acceptance:</strong> a new Go repository can adopt ago from the first screen.
+      All commands run in a clean fixture. Each public claim has local or primary evidence.</li>
+
+    <li><strong>Fail-before:</strong> no <code>go get -tool</code>. <code>ago.Check</code> has an
+      extra context argument. The shipped command fails as a vet tool.</li>
+
+    <li><strong>Verification:</strong> executable quick-start fixture, link checks, package examples,
+      <code>make check</code>, and <code>make prose</code>.</li>
+  </ul>
+  <h3 id="task-ADX4">ADX4 Publish the optional ago Agent Skill</h3><ul>
+    <li><strong>Problem:</strong> agents need a reusable remediation loop without adding long
+      instructions to each repository.</li>
+
+    <li><strong>Owning seam and paths:</strong> <code>agentstation/skills/ago/SKILL.md</code>.</li>
+
+    <li><strong>Steps:</strong> define discovery triggers. Inspect the pinned tool and policy.
+      Run JSON output, preserve policy, fix findings, and handle exit status 2.</li>
+
+    <li><strong>Acceptance:</strong> <code>gh skill publish --dry-run</code> and the skills repository
+      validator pass. README gives an optional install command.</li>
+
+    <li><strong>Fail-before:</strong> the skills repository has no ago skill.</li>
+
+    <li><strong>Verification:</strong> run both skill validators and a local project install.</li>
+  </ul>
+  <h3 id="task-ADX5">ADX5 Run release, documentation, and pre-PR gates</h3><ul>
+    <li><strong>Problem:</strong> the cross-repository result needs one evidence-backed closeout.</li>
+
+    <li><strong>Owning seam and paths:</strong> both pull requests and the proof root.</li>
+
+    <li><strong>Steps:</strong> run repository checks, strict prose, the adoption fixture, license
+      checks, skill checks, and required autoreview before each substantive PR.</li>
+
+    <li><strong>Acceptance:</strong> each check records an exact result, PR checks pass, and live
+      publication state matches the README.</li>
+
+    <li><strong>Fail-before:</strong> ADX0 verifier baseline.</li>
+
+    <li><strong>Verification:</strong> commands named in ADX1 through ADX4.</li>
+  </ul>
+  <h3 id="task-ADX9">ADX9 Cleanup</h3><ul>
+    <li><strong>Problem:</strong> a merged plan must not remain an active control plane.</li>
+
+    <li><strong>Owning seam and paths:</strong> this plan and its proof root.</li>
+
+    <li><strong>Steps:</strong> after all final pull requests merge and the release is live,
+      delete this plan and its proof root.</li>
+
+    <li><strong>Acceptance:</strong> no repository reference to the plan slug remains.</li>
+
+    <li><strong>Fail-before:</strong> not applicable.</li>
+
+    <li><strong>Verification:</strong> search both repositories for <code>ago-adoption-dx</code>.</li>
+  </ul>
+</section>
+<section id="goal"><h2>Goal</h2><pre><code>Execute plans/ago-adoption-dx-plan.html to completion. This is a whole-plan
+goal, not a single-task goal. Read the plan fully, then read AGENTS.md,
+GLOSSARY.md, the technical-writing skill, the plans skill, and the nearest
+instructions in /Users/jack/src/github.com/agentstation/skills. Work in
+/Users/jack/src/github.com/agentstation/ago on branch codex/adoption-dx and in
+the skills repository on a codex/ago-skill branch. Chat history is not progress
+state. Resume from the status ledger, the execution log, and git state. If
+compaction happens, continue from the plan and git state. Keep one task
+in_progress, implement at the owning seam, capture fail-before evidence, run
+the verification commands, commit the work, write proof, append the log, mark
+the task terminal, and advance. Decide rather than ask. Record blockers and
+continue with the next eligible task. Do not bypass branch protection, add
+llms.txt, or make implicit edits to consumer agent instructions or CI. Commits
+and pull requests are permitted for this requested work. Stop only at a valid
+stop state from the plans skill. The goal is met when PR 2 and the adoption
+pull requests merge, the patch release renders on pkg.go.dev, the optional
+skill is installable, all ledger rows are terminal, and cleanup finishes.</code></pre></section>
+<section id="execution-log"><h2>Execution log</h2><table><thead><tr><th>Date</th><th>Item</th><th>Action</th><th>Evidence</th></tr></thead><tbody>
+<tr><td>2026-08-24</td><td>meta</td><td>activated</td><td>User expanded the request to the full adoption and agent DX outcome.</td></tr>
+<tr><td>2026-08-24</td><td>ADX1</td><td>review correction pushed</td><td>Commit 0ff3ed9 separates GitHub property and message data escapes.</td></tr>
+<tr><td>2026-08-24</td><td>ADX0</td><td>done</td><td>Commit 6c58b23 adds the active plan, research proof, and red verifier.</td></tr>
+<tr><td>2026-08-24</td><td>ADX2</td><td>implementation complete</td><td>Commit 9447506 repairs classifier input. Publication waits for final merge and release.</td></tr>
+<tr><td>2026-08-25</td><td>ADX3</td><td>done</td><td>Commit 3b8d5bb makes the pinned Go tool path primary and fixes module-version reporting.</td></tr>
+<tr><td>2026-08-25</td><td>ADX4</td><td>done</td><td>agentstation/skills PR 6 merged as 83a41ea. The optional skill is installable from the shared catalogue.</td></tr>
+<tr><td>2026-08-25</td><td>ADX5</td><td>in progress</td><td>make check, release-check, strict prose, link checks, and proof verifier pass.</td></tr>
+<tr><td>2026-08-25</td><td>ADX5</td><td>done</td><td>Sol high pre-PR autoreview reports no accepted or actionable findings. Overall confidence is 0.98.</td></tr>
+</tbody></table></section>
+</main>
+</body>
+</html>

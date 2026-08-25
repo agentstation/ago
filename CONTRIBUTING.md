@@ -81,7 +81,7 @@ go test -run TestRules ./...
 - `make check` passes.
 - New behavior has a test. A bug fix has a regression test.
 - Update `CHANGELOG.md` under `## [Unreleased]`.
-- Update the README rule section if you added or changed a rule. The anchor
+- Update `docs/rules.md` if you added or changed a rule. The anchor
   must match the rule name, because the command builds `docURL` from it.
 - Commit messages follow [Conventional Commits](https://www.conventionalcommits.org/)
   (`feat:`, `fix:`, `docs:`, `ci:`, …). The release changelog comes from
