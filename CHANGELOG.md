@@ -31,6 +31,9 @@ passed.
 
 - `.github/CODEOWNERS` named `@agentstation/maintainers`, a team that does
   not exist. It now names `@jackspirou` and `@savkat`.
+- pkg.go.dev treated the dual-license grant in `LICENSE` as an unknown
+  license and hid the package documentation. `COPYRIGHT` now holds the grant.
+  The recognized `LICENSE-APACHE` and `LICENSE-MIT` files remain unchanged.
 
 ### Changed
 

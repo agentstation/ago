@@ -22,6 +22,8 @@ check "package docs do not claim the shipped command is a vet tool" \
 	sh -c '! grep -q "through go vet with -vettool" ago.go'
 check "pkg.go.dev license files contain no pointer file" \
 	sh -c 'test ! -f LICENSE'
+check "pkg.go.dev recognizes each license text" \
+	sh -c 'cd proof/ago-adoption-dx/licensecheck && go run . ../../../LICENSE-APACHE ../../../LICENSE-MIT'
 check "README contains no duplicated generics sentence" \
 	sh -c 'test "$(grep -o "generic containers in the language without giving programmers access" README.md | wc -l | tr -d " ")" -le 1'
 
