@@ -101,7 +101,7 @@ func TestLoadConfig(t *testing.T) {
 }
 
 // TestLoadConfigSearchesParents checks that a config at the repository root
-// governs a run started from a subdirectory, which is how an agent invoked in
+// governs a run started from a subdirectory. That is how an agent invoked in
 // a package directory picks up the repository's policy.
 func TestLoadConfigSearchesParents(t *testing.T) {
 	root := t.TempDir()

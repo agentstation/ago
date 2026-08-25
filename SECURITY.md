@@ -12,7 +12,7 @@ vulnerability.
 
 Include the affected version (`ago -version`), the Go toolchain version, the
 command you ran, a minimal reproduction, and the security effect. Remove any
-proprietary source from your report — a synthetic reproduction is always
+proprietary source from your report. A synthetic reproduction is always
 preferable.
 
 We will confirm receipt, assess the report, and coordinate remediation and
@@ -26,13 +26,12 @@ report. It executes no code from the packages it analyzes.
 
 In scope:
 
-- A crafted `.ago.yml` or `//ago:ignore` directive that causes `ago` to crash,
-  hang, or consume unbounded memory.
-- A crafted source file that causes `ago` to silently skip analysis, so a
-  violation goes unreported while the exit status stays `0`.
-- Output injection — a finding message, file path, or rule name that escapes
-  its encoding in `-format sarif` or `-format github` and forges an annotation
-  or a code-scanning alert.
+- A crafted `.ago.yml` or `//ago:ignore` directive that causes `ago` to
+  crash, hang, or consume unbounded memory.
+- A crafted source file that causes `ago` to silently skip analysis. A
+  violation then goes unreported while the exit status stays `0`.
+- Output injection. A finding message, file path, or rule name that escapes
+  SARIF or GitHub encoding and forges an alert.
 - Path traversal through an `exclude` pattern or a package pattern.
 
 Out of scope:
@@ -42,6 +41,6 @@ Out of scope:
   is equivalent to running `go list` on it, and carries the same risk. Do not
   run `ago` on source you would not run `go build` on.
 - Vulnerabilities in the Go toolchain or in `golang.org/x/tools`. Report those
-  upstream; we will pick up the fix on the next release.
+  upstream. We will pick up the fix on the next release.
 - A rule producing a false positive or a false negative. That is a correctness
-  bug — please file it as a normal issue.
+  bug. Please file it as a normal issue.

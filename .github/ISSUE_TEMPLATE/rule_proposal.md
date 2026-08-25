@@ -24,7 +24,7 @@ assignees: ''
 **What it costs a reader**
 
 <!-- Say what someone reading this code cold has to do that they would not
-     otherwise: a second place to look, a scroll upward, an identifier whose
+     otherwise. A second place to look. A scroll upward. An identifier whose
      origin is not local. "It is confusing" is not a rationale. -->
 
 **On or off by default**
@@ -36,15 +36,15 @@ assignees: ''
 **Evidence**
 
 <!-- Measure it against the standard library. See docs/stdlib-survey.md.
-     A count the standard library uses heavily does not disqualify a rule,
-     but it does make it off-by-default. -->
+     A count the standard library uses heavily does not disqualify a rule.
+     It does make the rule off by default. -->
 
-- Occurrences in the stdlib (non-test):
+- Occurrences in the standard library (non-test):
 - Method used:
 
 **What the rule must NOT report**
 
-<!-- The near-misses. Most defects in this tool have been a rule catching a
+<!-- The near-misses. Most defects in this tool were a rule catching a
      neighbouring construct that looked similar. -->
 
 **Does it revert a Go release?**

@@ -15,16 +15,16 @@ import (
 )
 
 // TestRules runs every rule against its fixture package. analysistest fails
-// the test both when an expected diagnostic is missing and when an unexpected
-// one appears, so each fixture doubles as a false-positive guard.
+// the test when an expected diagnostic does not appear. It also fails when an
+// unexpected one appears. Each fixture doubles as a false-positive guard.
 func TestRules(t *testing.T) {
 	tests := []struct {
 		rule Rule
 		pkg  string
-		// minGo is the Go minor version the fixture needs in order to
-		// type-check. A fixture for a rule that reverts a language change
-		// cannot compile on a toolchain from before that change, and the rule
-		// is dormant there anyway: the compiler is already enforcing it.
+		// minGo is the Go minor version the fixture needs to type-check.
+		// A fixture for a rule that reverts a language change cannot compile
+		// on a toolchain from before that change. The rule is dormant there
+		// anyway: the compiler already enforces it.
 		minGo int
 	}{
 		{rule: RuleNoGoto, pkg: "nogoto"},
@@ -52,7 +52,7 @@ func TestRules(t *testing.T) {
 }
 
 // goAtLeast reports whether the toolchain running the tests is at least
-// Go 1.<minor>. An unrecognized version string is treated as new enough, so a
+// Go 1.<minor>. An unrecognized version string counts as new enough, so a
 // development toolchain runs the tests rather than silently skipping them.
 func goAtLeast(minor int) bool {
 	v := strings.TrimPrefix(runtime.Version(), "go1.")
@@ -69,10 +69,10 @@ func goAtLeast(minor int) bool {
 	return got >= minor
 }
 
-// TestNoGenericMethods checks the Go 1.27 rule. The fixture is written at run
-// time rather than committed, because a toolchain older than Go 1.27 cannot
+// TestNoGenericMethods checks the Go 1.27 rule. The test writes the fixture at
+// run time rather than committing it. A toolchain older than Go 1.27 cannot
 // parse a generic method and would fail gofmt over a committed file. On such a
-// toolchain the language is already enforcing the rule and the test skips.
+// toolchain the language already enforces the rule and the test skips.
 func TestNoGenericMethods(t *testing.T) {
 	const src = `package nogenericmethods
 

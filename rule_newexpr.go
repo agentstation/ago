@@ -23,9 +23,9 @@ thing and reads left to right:
 	p := &age
 
 When type information is available the rule decides exactly whether the
-argument is a type. Without it the rule falls back to syntax and reports only
-unambiguous expressions such as new(f(x)), so a shadowed new or a variable
-that looks like a type name is not reported.`,
+argument is a type. Without it the rule falls back to syntax. It reports only
+unambiguous expressions such as new(f(x)). A shadowed new or a variable that
+looks like a type name is not reported.`,
 	Analyzer: newAnalyzer("no-new-expr",
 		"reject new() applied to an expression rather than a type (reverts Go 1.26)",
 		checkNewExpr),
@@ -79,9 +79,9 @@ func (c *checkPass) argIsType(arg ast.Expr) bool {
 	return looksLikeType(arg)
 }
 
-// looksLikeType is the syntax-only approximation used when type information is
-// missing. It errs toward permitting anything that could name a type, so that
-// a run without types under-reports rather than producing false positives.
+// looksLikeType is the syntax-only approximation used when the run has no
+// type information. It errs toward permitting anything that could name a type,
+// so a run without types under-reports rather than producing false positives.
 func looksLikeType(e ast.Expr) bool {
 	switch e := e.(type) {
 	case *ast.Ident:

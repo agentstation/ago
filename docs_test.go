@@ -10,8 +10,8 @@ import (
 var headingRE = regexp.MustCompile(`(?m)^#{1,6}\s+(.*)$`)
 
 // Every rule's DocURL points at a README anchor. GitHub derives that anchor
-// from a heading, so a rule added without a heading ships a link that 404s —
-// and the JSON catalogue hands that link to coding agents.
+// from a heading. A rule added without a heading ships a link that 404s.
+// The JSON catalogue hands that link to coding agents.
 func TestEveryRuleHasAReadmeAnchor(t *testing.T) {
 	readme, err := os.ReadFile("README.md")
 	if err != nil {
@@ -48,8 +48,8 @@ func slugify(heading string) string {
 }
 
 // The README documents each rule's default state. A rule whose default flips
-// without the README changing is a documentation bug that only a reader would
-// catch, so assert the counts agree with the "On by default" section.
+// without a README change is a documentation bug that only a reader would
+// catch. Assert the counts agree with the "On by default" section.
 func TestDefaultRuleCountMatchesReadme(t *testing.T) {
 	readme, err := os.ReadFile("README.md")
 	if err != nil {

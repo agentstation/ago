@@ -14,7 +14,7 @@ assignees: ''
 
 **What you would like**
 
-**Alternatives you have considered**
+**Alternatives you considered**
 
 <!-- Including: is this something a config option, an output format, or your
      own analysis.Analyzer built on ago.Rules() could already do? -->

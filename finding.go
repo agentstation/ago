@@ -15,7 +15,7 @@ type Finding struct {
 	Severity Severity `json:"severity"`
 	// Message states what is wrong and what to write instead.
 	Message string `json:"message"`
-	// File is the path as ago was given it, slash separated.
+	// File is the path as the caller passed it, slash separated.
 	File string `json:"file"`
 	// Line and Column are 1-based, matching go vet and gofmt.
 	Line   int `json:"line"`
@@ -53,7 +53,7 @@ func sortFindings(fs []Finding) {
 }
 
 // dedupe removes findings that are identical in rule and position, which
-// happens when the same package is named twice on the command line.
+// happens when the command line names the same package twice.
 func dedupe(fs []Finding) []Finding {
 	if len(fs) < 2 {
 		return fs

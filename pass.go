@@ -11,8 +11,8 @@ import (
 var reflectTypeOfIgnoreIndex = reflect.TypeOf((*ignoreIndex)(nil))
 
 // newAnalyzer builds the analyzer for a rule. Every rule analyzer requires
-// ignoresAnalyzer, so that suppression is enforced in one place rather than
-// re-implemented per rule.
+// ignoresAnalyzer, so one place enforces suppression rather than each rule
+// re-implementing it.
 func newAnalyzer(name, doc string, run func(*checkPass)) *analysis.Analyzer {
 	a := &analysis.Analyzer{
 		Name:     identName(name),
@@ -37,8 +37,8 @@ type checkPass struct {
 	ignores *ignoreIndex
 }
 
-// reportf records a violation at the position of n unless an //ago:ignore
-// directive covers that line for this rule.
+// reportf records a violation at n unless an //ago:ignore directive covers
+// that line for this rule.
 func (c *checkPass) reportf(n ast.Node, format string, args ...any) {
 	if c.ignores.suppressed(c.Fset, n.Pos(), c.rule) {
 		return

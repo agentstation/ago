@@ -44,7 +44,7 @@ func ParseFormat(s string) (Format, error) {
 }
 
 // A Report is everything one ago run produced. The JSON encoding of this type
-// is ago's machine-readable contract; fields are added over time but existing
+// is ago's machine-readable contract. Fields grow over time but existing
 // fields keep their name and meaning.
 type Report struct {
 	// Version is the ago version that produced the report.
@@ -56,13 +56,13 @@ type Report struct {
 	// StaleIgnores lists //ago:ignore directives that suppressed nothing.
 	StaleIgnores []StaleIgnore `json:"staleIgnores"`
 	// Errors holds load or parse failures. A non-empty Errors means the run
-	// was incomplete and Findings may be missing violations.
+	// did not finish and Findings may omit violations.
 	Errors []string `json:"errors"`
 }
 
-// A StaleIgnore is a suppression directive that matched no finding. It is
-// reported separately from Findings because it is a maintenance signal rather
-// than a violation of the Go subset.
+// A StaleIgnore is a suppression directive that matched no finding. The
+// command reports it separately from Findings because it is a maintenance
+// signal rather than a Go-subset violation.
 type StaleIgnore struct {
 	// Rules lists the rule names the directive claimed to suppress.
 	Rules []string `json:"rules"`

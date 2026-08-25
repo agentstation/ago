@@ -2,24 +2,36 @@
 # Run "ago -list" for the rule set this binary supports.
 
 enable:
-  - no-self-referential-constraints  # a generic type may not name itself in its own type parameter list
-  # - no-f-bounded-constraints         # a type parameter may not appear in its own constraint
-  # - no-redundant-short-decl          # use var; := only where it is syntactically required
-  - no-naked-return                  # return statements must be explicit even with named results
-  # - no-init-func                     # func init() is forbidden; initialize explicitly
-  # - no-embedded-field                # struct embedding is forbidden; name your fields
-  - no-goto                          # goto is forbidden
-  - no-generic-methods               # methods may not declare their own type parameters
-  # - no-generic-decls                 # no type parameters on any func or type declaration
-  - no-invalid-ignore                # every //ago:ignore must name a known rule and give a reason
-  - no-dot-import                    # import . "pkg" is forbidden
-  # - no-blank-import-outside-main     # import _ "pkg" only allowed in package main
-  - no-new-expr                      # new() takes a type, not an expression
+  - no-self-referential-constraints  # A generic type may not name itself in its own type parameter list.
+
+  # no-f-bounded-constraints         # A type parameter may not appear in its own constraint.
+
+  # no-redundant-short-decl          # Use var except where := is syntactically required.
+
+  - no-naked-return                  # Return statements must be explicit even with named results.
+
+  # no-init-func                     # Func init() is forbidden. Initialize explicitly.
+
+  # no-embedded-field                # Struct embedding is forbidden. Name your fields.
+
+  - no-goto                          # Goto is forbidden.
+
+  - no-generic-methods               # Methods may not declare their own type parameters.
+
+  # no-generic-decls                 # No type parameters on any func or type declaration.
+
+  - no-invalid-ignore                # Every //ago:ignore must name a known rule and give a reason.
+
+  - no-dot-import                    # Import . "pkg" is forbidden.
+
+  # no-blank-import-outside-main     # Import _ "pkg" only allowed in package main.
+
+  - no-new-expr                      # New() takes a type, not an expression.
 
 disable: []
 
 # Check _test.go files as well as production files.
 tests: false
 
-# Path patterns to skip. vendor and testdata are always skipped.
+# Path patterns to skip. The tool always skips vendor and testdata.
 exclude: []

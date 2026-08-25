@@ -23,9 +23,9 @@ const (
 
 // An ignoreDirective is one parsed //ago:ignore or //ago:ignore-file comment.
 type ignoreDirective struct {
-	// Pos is the position of the comment itself.
+	// Pos locates the comment itself.
 	Pos token.Pos
-	// File is the file the directive appears in.
+	// File is the file that contains the directive.
 	File string
 	// Line is the source line the directive suppresses. It is 0 for a
 	// file-scoped directive.
@@ -35,8 +35,8 @@ type ignoreDirective struct {
 	Rules []string
 	// Reason is the text after the "--" separator.
 	Reason string
-	// Problem describes why the directive is malformed, or is empty when the
-	// directive is well formed.
+	// Problem names the malformation. It stays empty for a well-formed
+	// directive.
 	Problem string
 	// used records whether any diagnostic was actually suppressed by this
 	// directive. Drivers use it to report stale suppressions. Rules run
@@ -68,8 +68,8 @@ type ignoreIndex struct {
 	all []*ignoreDirective
 }
 
-// suppressed reports whether a diagnostic for rule at pos is suppressed, and
-// marks the responsible directive as used.
+// suppressed reports whether a directive covers a diagnostic for rule at pos,
+// and marks that directive as used.
 func (ix *ignoreIndex) suppressed(fset *token.FileSet, pos token.Pos, rule string) bool {
 	if ix == nil {
 		return false
@@ -131,7 +131,7 @@ func runIgnores(pass *analysis.Pass) (any, error) {
 }
 
 // parseDirective turns a comment into a directive, or returns nil when the
-// comment is not an ago directive at all. A malformed directive is returned
+// comment is not an ago directive at all. A malformed directive comes back
 // with Problem set so that no-invalid-ignore can report it.
 func parseDirective(fset *token.FileSet, c *ast.Comment, src []byte) *ignoreDirective {
 	text := strings.TrimRight(c.Text, " \t")
@@ -187,7 +187,7 @@ func directiveProblem(prefix string, names []string, hasReason bool) string {
 }
 
 // directiveTargetLine reports which source line a line-scoped directive
-// suppresses. A directive trailing code suppresses that same line; a directive
+// suppresses. A directive trailing code suppresses that same line. A directive
 // on a line of its own suppresses the line below it.
 func directiveTargetLine(pos token.Position, src []byte) int {
 	if isOwnLineComment(pos, src) {
@@ -222,8 +222,8 @@ func splitList(s string) []string {
 	return out
 }
 
-// readSource returns the contents of a file through the pass, so that editor
-// overlays are honoured, and falls back to the filesystem.
+// readSource returns the contents of a file through the pass, so editor
+// overlays apply, and falls back to the filesystem.
 func readSource(pass *analysis.Pass, filename string) []byte {
 	if pass.ReadFile != nil {
 		if b, err := pass.ReadFile(filename); err == nil {

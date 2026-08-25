@@ -10,9 +10,10 @@ LDFLAGS  = -ldflags "-s -w -X github.com/agentstation/ago.Version=$(VERSION)"
 
 GOLANGCI_LINT_VERSION = v2.12.2
 GORELEASER_VERSION    = 2.17.1
+TECHNICAL_WRITING    ?= $(HOME)/.agents/skills/technical-writing/scripts/technical-writing
 
-# testdata holds intentionally unparseable Go. Every tool that walks the tree
-# must be pointed at real source instead.
+# testdata holds intentionally unparseable Go. Point every tool that walks
+# the tree at real source instead.
 GOFILES = $(shell find . -name '*.go' -not -path './testdata/*')
 
 .PHONY: all
@@ -65,7 +66,7 @@ fmt: ## Format all source (excluding testdata)
 	@gofmt -w $(GOFILES)
 
 .PHONY: fmt-check
-fmt-check: ## Fail if any source is unformatted
+fmt-check: ## Fail if gofmt lists unformatted source
 	@out=$$(gofmt -l $(GOFILES)); \
 	if [ -n "$$out" ]; then echo "unformatted files:"; echo "$$out"; exit 1; fi
 
@@ -79,13 +80,22 @@ lint: fmt-check vet ## Run gofmt, go vet, and golangci-lint
 		echo "golangci-lint not installed; run: make tools"; exit 1; \
 	fi
 	@# A different version on PATH finds a different set of issues, so a clean
-	@# run here can still fail CI. Warn rather than stop: the run is still useful.
+	@# run here can still fail CI. Warn rather than stop. The run is still useful.
 	@have=$$(golangci-lint version 2>/dev/null | sed -n 's/.*has version \([^ ]*\).*/\1/p'); \
 	want=$(GOLANGCI_LINT_VERSION:v%=%); \
 	if [ "$$have" != "$$want" ]; then \
 		echo "warning: golangci-lint $$have on PATH, CI runs $$want; run: make tools"; \
 	fi
 	golangci-lint run
+
+.PHONY: prose
+prose: ## Lint developer-facing prose in strict mode
+	@if [ ! -x "$(TECHNICAL_WRITING)" ]; then \
+		echo "technical-writing helper not found at $(TECHNICAL_WRITING)"; \
+		echo "set TECHNICAL_WRITING to the helper path"; exit 1; \
+	fi
+	$(TECHNICAL_WRITING) glossary check
+	$(TECHNICAL_WRITING) lint . --mode strict --format text
 
 .PHONY: tidy
 tidy: ## Tidy and verify go.mod

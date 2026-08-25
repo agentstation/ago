@@ -53,9 +53,9 @@ homebrew_casks:
     repository:
       owner: agentstation
       name: homebrew-tap
-      # goreleaser validates this field literally: only the "{{ .Env.NAME }}"
-      # form passes, not an index expression. It is resolved at publication,
-      # so snapshot builds do not need the variable set.
+      # goreleaser validates this field literally. Only the "{{ .Env.NAME }}"
+      # form passes, not an index expression. Publication resolves it, so
+      # snapshot builds do not need the variable set.
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     # Never replace the stable cask with a release candidate.
     skip_upload: auto

@@ -1,0 +1,199 @@
+version = 1
+mode = "strict"
+
+[limits]
+instruction_words = 20
+descriptive_words = 25
+paragraph_sentences = 6
+max_warnings_per_100_words = 0
+
+[rules]
+long_sentence = "error"
+semicolon = "error"
+contraction = "error"
+passive_voice = "error"
+complex_verb = "error"
+ing_main_verb = "error"
+nominalization = "error"
+phrasal_verb = "error"
+banned_word = "error"
+marketing_adjective = "error"
+modal_hedge = "error"
+formulaic_phrase = "error"
+negative_parallelism = "error"
+assistant_scaffold = "error"
+restricted_vocabulary = "error"
+long_paragraph = "error"
+em_dash = "error"
+glossary_term = "error"
+
+[files]
+exclude = []
+exceptions = ["CHANGELOG.md"]
+
+[terms]
+additional_banned = []
+allowed = []
+
+[restricted_vocabulary]
+additional = []
+exceptions = []
+
+[glossary]
+path = "GLOSSARY.md"
+required = true
+require_approved_definitions = true
+candidate_min_occurrences = 2
+ignored_candidates = [
+  "Adder",
+  "analyzer-ident",
+  "ArtifactLocation",
+  "AssignStmt",
+  "BlockStmt",
+  "Box",
+  "BuildAnalyzers",
+  "CHANGELOG",
+  "CI",
+  "commentSummary",
+  "CompiledGoFiles",
+  "Config",
+  "ConfigName",
+  "ConfigNameAlt",
+  "CONTRIBUTING",
+  "DefaultConfig",
+  "DefaultNames",
+  "Developer-facing",
+  "DocURL",
+  "Dual-licensed",
+  "EndColumn",
+  "EndLine",
+  "EOF",
+  "ExampleConfig",
+  "FieldList",
+  "FileSet",
+  "Finding",
+  "Format",
+  "FormatGitHub",
+  "FormatJSON",
+  "FormatSARIF",
+  "FormatText",
+  "FullDescription",
+  "FuncDecl",
+  "FuncType",
+  "GenDecl",
+  "GetLoadMode",
+  "GLOSSARY",
+  "GitHub",
+  "GOROOT",
+  "hand-written",
+  "HasPrefix",
+  "HelpURI",
+  "ID",
+  "ignore-file",
+  "InformationURI",
+  "JSON",
+  "LICENSE-APACHE",
+  "LICENSE-MIT",
+  "LoadConfig",
+  "LoadModeTypesInfo",
+  "meta-names",
+  "MIT",
+  "MkdirAll",
+  "NeedModule",
+  "near-misses",
+  "newAnalyzer",
+  "NewEncoder",
+  "no-dot-import",
+  "no-f-bounded-constraints",
+  "no-generic-methods",
+  "no-goto",
+  "no-invalid-ignore",
+  "no-naked-return",
+  "no-new-expr",
+  "no-self-referential-constraints",
+  "Node",
+  "non-findings",
+  "Options",
+  "ParseFormat",
+  "PhysicalLocation",
+  "Plugin",
+  "PY",
+  "ReadFile",
+  "ReplaceAll",
+  "Report",
+  "ReportStaleIgnores",
+  "ResultType",
+  "Rule",
+  "RuleID",
+  "RuleNoBlankImportOutsideMain",
+  "RuleNoDotImport",
+  "RuleNoEmbeddedField",
+  "RuleNoFBoundedConstraints",
+  "RuleNoGenericDecls",
+  "RuleNoGenericMethods",
+  "RuleNoGoto",
+  "RuleNoInitFunc",
+  "RuleNoInvalidIgnore",
+  "RuleNoNakedReturn",
+  "RuleNoNewExpr",
+  "RuleNoRedundantShortDecl",
+  "RuleNoSelfReferentialConstraints",
+  "SetIndent",
+  "SetOutput",
+  "Settings",
+  "Severity",
+  "ShortDescription",
+  "StaleIgnore",
+  "StaleIgnores",
+  "StartColumn",
+  "StartLine",
+  "stdlib-survey",
+  "StructType",
+  "TempDir",
+  "technical-writing",
+  "TestAnalyzersValidate",
+  "TestBrokenFileDoesNotHideFindings",
+  "TestDeterministicOrder",
+  "TestDisableAppliesAfterOverrides",
+  "TestDuplicatePatterns",
+  "TestExampleConfigIsValid",
+  "TestIgnoreDirectives",
+  "TestLoadConfigMissingIsNotAnError",
+  "TestLoadConfigSearchesParents",
+  "TestNoGenericMethods",
+  "TestOverridesBeatConfig",
+  "TestRuleMetadata",
+  "TestRules",
+  "TestStaleIgnoresOffByDefault",
+  "third_party",
+  "ToSlash",
+  "TrimSpace",
+  "TYPE",
+  "Typed",
+  "TypeParams",
+  "TypesInfo",
+  "TypeSpec",
+  "URI",
+  "URL",
+  "WriteFile",
+  "WriteRune",
+  "WriteString",
+]
+scan = [
+  "README.md",
+  "CONTRIBUTING.md",
+  "SECURITY.md",
+  "AGENTS.md",
+  "CLAUDE.md",
+  "CHANGELOG.md",
+  "docs/**/*.md",
+  "*.go",
+  "cmd/**/*.go",
+  "plugin/**/*.go",
+  ".github/**/*.md",
+]
+exclude = [
+  ".git",
+  "testdata",
+  "vendor",
+]

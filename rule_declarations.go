@@ -8,7 +8,7 @@ import (
 // RuleNoRedundantShortDecl forbids := where var is a drop-in replacement.
 var RuleNoRedundantShortDecl = register(Rule{
 	Name:     "no-redundant-short-decl",
-	Summary:  "use var; := only where it is syntactically required",
+	Summary:  "use var except where := is syntactically required",
 	Default:  false,
 	Severity: Error,
 	Rationale: `One way to introduce a variable instead of several.
@@ -21,9 +21,9 @@ syntax error:
 
 It reports := only in plain statement position, where var is a drop-in
 replacement. Hoisting an if or for header declaration out to a preceding var
-is legal but widens the variable's scope, so those are treated as
-load-bearing too. A blanket ban would force adding syntax to the language,
-which ago will not do.`,
+is legal but widens the variable's scope. The rule treats those as
+load-bearing too. A blanket ban would force adding syntax to the language.
+The tool will not do that.`,
 	Analyzer: newAnalyzer("no-redundant-short-decl",
 		"reject := in plain statement position, where var is a drop-in replacement",
 		checkRedundantShortDecl),
@@ -69,12 +69,12 @@ var RuleNoNakedReturn = register(Rule{
 	Default:  true,
 	Severity: Error,
 	Rationale: `A bare return in a function with named results forces the reader to scroll up
-to learn what is being returned, and silently returns whatever the result
-variables happen to hold at that point. Naming the values costs nothing and
-survives later edits to the function body.
+to learn the returned values. It also silently returns whatever the result
+variables hold at that point. Naming the values costs nothing and survives
+later edits to the function body.
 
-Function literals are checked against their own result list, not the
-enclosing function's, so a naked return inside a closure is reported when the
+The rule checks function literals against their own result list, not the
+enclosing function's. It reports a naked return inside a closure when the
 closure itself declares named results.`,
 	Analyzer: newAnalyzer("no-naked-return",
 		"reject bare return statements in a signature with named results",
@@ -92,7 +92,7 @@ func checkNakedReturn(c *checkPass) {
 		reportHere := namedResults(sig)
 		ast.Inspect(body, func(n ast.Node) bool {
 			if lit, ok := n.(*ast.FuncLit); ok {
-				// The literal has its own result list; recurse with it and do
+				// The literal has its own result list. Recurse with it. Do
 				// not let the enclosing signature govern its returns.
 				walk(lit.Body, lit.Type, "the function literal")
 				return false
@@ -111,7 +111,7 @@ func checkNakedReturn(c *checkPass) {
 // RuleNoInitFunc forbids package initialisation functions.
 var RuleNoInitFunc = register(Rule{
 	Name:     "no-init-func",
-	Summary:  "func init() is forbidden; initialize explicitly",
+	Summary:  "func init() is forbidden. initialize explicitly",
 	Default:  false,
 	Severity: Error,
 	Rationale: `init runs before main in an order determined by the import graph, which makes
@@ -121,7 +121,7 @@ from main puts the order in one readable place.
 Off by default because avoiding init entirely requires a wiring convention
 that a linter cannot supply.`,
 	Analyzer: newAnalyzer("no-init-func",
-		"reject func init(); prefer explicit initialization",
+		"reject func init(). Prefer explicit initialization",
 		checkInitFunc),
 })
 
@@ -136,7 +136,7 @@ func checkInitFunc(c *checkPass) {
 // RuleNoEmbeddedField forbids struct embedding.
 var RuleNoEmbeddedField = register(Rule{
 	Name:     "no-embedded-field",
-	Summary:  "struct embedding is forbidden; name your fields",
+	Summary:  "struct embedding is forbidden. name your fields",
 	Default:  false,
 	Severity: Error,
 	Rationale: `Embedding promotes methods and fields implicitly, so a type's method set stops
@@ -149,7 +149,7 @@ is a real break with house Go, not a tidy-up.
 Interface embedding is not reported. Composing interfaces from smaller ones
 is the language's intended mechanism and has no field to name.`,
 	Analyzer: newAnalyzer("no-embedded-field",
-		"reject embedded struct fields; name them",
+		"reject embedded struct fields. Name them",
 		checkEmbeddedField),
 })
 
@@ -179,9 +179,9 @@ else is control flow the reader has to simulate by hand.
 
 This is a rule for application code, not a claim that goto is vestigial. The
 standard library's goto statements concentrate in the type checkers, the
-compiler, and the syscall exec paths: code that is either performance
-critical or a hand-written state machine. If you are writing that kind of
-code, turn this rule off rather than working around it.`,
+compiler, and the syscall exec paths. That code is either performance
+critical or a hand-written state machine. If you write that kind of code,
+turn this rule off rather than working around it.`,
 	Analyzer: newAnalyzer("no-goto", "reject goto statements", checkGoto),
 })
 

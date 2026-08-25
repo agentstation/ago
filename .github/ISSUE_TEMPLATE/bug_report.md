@@ -18,8 +18,8 @@ $ ago ./...
 
 **Minimal reproduction**
 
-<!-- The smallest Go file that shows the problem. Please do not paste
-     proprietary source; a synthetic reproduction is always preferable. -->
+<!-- The smallest Go file that shows the problem. Do not paste
+     proprietary source. A synthetic reproduction is always preferable. -->
 
 ```go
 package p
@@ -27,8 +27,8 @@ package p
 
 **Which rule**
 
-<!-- If a specific rule is involved, name it and paste `ago -explain <rule>`
-     if the rationale seems to disagree with the behavior. -->
+<!-- If a specific rule applies, name it and paste `ago -explain <rule>`
+     if the rationale seems to disagree with the behavior you saw. -->
 
 **Environment**
 

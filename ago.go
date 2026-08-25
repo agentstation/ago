@@ -4,11 +4,11 @@
 // rewrites code, and never changes semantics. Code that passes ago is
 // ordinary Go that builds with the stock toolchain.
 //
-// Every rule is a [golang.org/x/tools/go/analysis.Analyzer], so the same
-// checks run three ways: through the ago command, through go vet with
-// -vettool, and through a golangci-lint module plugin.
+// Every rule is a [golang.org/x/tools/go/analysis.Analyzer]. The same checks
+// run three ways: through the ago command, through go vet with -vettool, and
+// through a golangci-lint module plugin.
 //
-// The command is documented at [github.com/agentstation/ago/cmd/ago].
+// See [github.com/agentstation/ago/cmd/ago] for the command.
 package ago
 
 // Version is the module version, overwritten at link time by the release
