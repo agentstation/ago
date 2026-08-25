@@ -12,7 +12,7 @@ func TestGitHubFormatEscapesProperties(t *testing.T) {
 		Findings: []Finding{{
 			Rule:      "no-goto",
 			Severity:  Error,
-			Message:   "goto; use a loop\n::error title=forged::pwned",
+			Message:   "goto, use a loop\n::error title=forged::pwned",
 			File:      "a.go,line=1::injected",
 			Line:      2,
 			Column:    3,
@@ -41,11 +41,11 @@ func TestGitHubFormatEscapesProperties(t *testing.T) {
 	if !strings.Contains(out, "%2C") {
 		t.Fatalf("comma in file was not escaped:\n%s", out)
 	}
-	if strings.Contains(out, "\n::error title=forged::") || strings.Contains(out, "::error title=forged::") {
+	if strings.Contains(out, "\n::error title=forged::") {
 		t.Fatalf("message injected a workflow command:\n%s", out)
 	}
-	if !strings.Contains(out, "%3A%3Aerror") {
-		t.Fatalf(":: in message was not escaped:\n%s", out)
+	if !strings.Contains(out, "goto, use a loop%0A::error title=forged::pwned") {
+		t.Fatalf("message data used the property escape set:\n%s", out)
 	}
 }
 

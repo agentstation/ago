@@ -143,8 +143,8 @@ func (r *Report) writeGitHub(w io.Writer) error {
 }
 
 // escapeWorkflowParam encodes a GitHub Actions workflow-command property.
-// An unescaped ",", ":", CR, LF, or "%" in file= or title= splits the
-// command and forges a second annotation.
+// An unescaped ",", ":", CR, LF, or "%" in file= or title= can change the
+// command structure.
 func escapeWorkflowParam(s string) string {
 	return strings.NewReplacer(
 		"%", "%25",
@@ -157,5 +157,9 @@ func escapeWorkflowParam(s string) string {
 
 // escapeWorkflowData encodes the message body after the second "::".
 func escapeWorkflowData(s string) string {
-	return escapeWorkflowParam(s)
+	return strings.NewReplacer(
+		"%", "%25",
+		"\r", "%0D",
+		"\n", "%0A",
+	).Replace(s)
 }
