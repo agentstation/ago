@@ -42,7 +42,7 @@ archives:
     files:
       - README.md
       - CHANGELOG.md
-      - COPYRIGHT
+      - LICENSE
       - LICENSE-MIT
       - LICENSE-APACHE
 

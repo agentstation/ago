@@ -7,202 +7,319 @@
 
 A restriction-only linter for Go.
 
-`ago` rejects selected legal Go constructs. It does not add syntax, rewrite
-code, or change semantics. Code that passes `ago` is ordinary Go that builds
-with the stock toolchain.
+The name reads two ways: *a-go* (agent Go, the subset an agent may write)
+and *ago* (the Go we had before, restored).
+
+`ago` only ever rejects language constructs. It never adds syntax, rewrites
+code, or changes semantics. Code that passes `ago` is ordinary Go. That Go
+builds with the stock toolchain.
 
 ```console
-$ go tool ago ./...
+$ ago ./...
 internal/store/index.go:42:2: naked return in indexAll; name the values you are returning (no-naked-return)
 internal/store/index.go:88:9: new() takes a type, not an expression (no-new-expr)
 2 violations
 ```
 
-The name reads as *a-go*, the Go subset an agent may write. It also reads as
-*ago*, the Go that earlier toolchains accepted. Read the [design
-case](docs/design.md) for the project boundary and evidence.
-
-## Adopt ago in a Go repository
-
-ago requires Go 1.25 or later and a Go module.
-
-1. Add ago as a module tool dependency.
-
-   ```sh
-   go get -tool github.com/agentstation/ago/cmd/ago@latest
-   ```
-
-   This command records an exact ago version in `go.mod` and `go.sum`.
-
-2. Write the starter rule policy.
-
-   ```sh
-   go tool ago -init
-   ```
-
-   This command creates `.ago.yml`. Edit the file, then commit it with
-   `go.mod` and `go.sum`.
-
-3. Check the module.
-
-   ```sh
-   go tool ago ./...
-   ```
-
-   A clean run prints nothing and exits with status 0.
-
-The Go module now owns the ago version. Developers, coding agents, and CI can
-run `go tool ago` without a global installation or a `PATH` change.
-
-### Other installation methods
-
-Install a global command when one pinned repository does not own the use:
-
-```sh
-go install github.com/agentstation/ago/cmd/ago@latest
-```
-
-On macOS or Linux with Homebrew:
+## Install
 
 ```sh
 brew install agentstation/tap/ago
 ```
 
-Release archives, checksums, software bills of materials, and build provenance
-are available on the [release page](https://github.com/agentstation/ago/releases).
-
-## Make the policy automatic
-
-Four repository files make the policy repeatable:
-
-| File | Contract |
-| --- | --- |
-| `go.mod` | Pins the ago command version. |
-| `.ago.yml` | Selects the rule policy. |
-| `AGENTS.md` | Tells coding agents when and how to run the policy. |
-| CI workflow | Rejects a change that violates the policy. |
-
-Add this instruction to the adopting repository's `AGENTS.md`:
-
-```markdown
-Run `go tool ago -stale-ignores -format json ./...` after each Go change.
-Fix findings in source. Do not change `.ago.yml` or add a suppression only to
-make the run pass. Exit status 2 means the check was incomplete.
+```sh
+go install github.com/agentstation/ago/cmd/ago@latest
 ```
 
-Use the same pinned tool in GitHub Actions:
+Or download a signed archive from [releases](https://github.com/agentstation/ago/releases).
+Every archive ships with `checksums.txt` and an SBOM.
 
-```yaml
-- uses: actions/setup-go@v7
-  with:
-    go-version: stable
-- run: go tool ago -format github ./...
-```
-
-CI remains the policy boundary. Agent instructions and the optional
-[ago Agent Skill](#optional-agent-skill) improve the local repair loop.
-
-## Run ago
+## Quick start
 
 ```sh
-go tool ago ./...                    # default rule set, current module
-go tool ago -list                    # show every rule and which are on
-go tool ago -explain no-goto         # print one complete rationale
-go tool ago -all ./...               # run every rule
-go tool ago -tests ./...             # include _test.go files
-go tool ago -stale-ignores ./...     # report unused suppressions
+ago ./...                    # default rule set, current module
+ago -init                    # write a starter .ago.yml
+ago -list                    # show every rule and which are on
+ago -explain no-goto         # full rationale for one rule
+ago -all ./...               # every rule, ignoring config
+ago -tests ./...             # include _test.go files
 ```
 
 Package arguments are [`go/packages`](https://pkg.go.dev/golang.org/x/tools/go/packages)
-patterns. With no arguments, ago checks `./...`.
+patterns. They are the same ones `go build` accepts. With no arguments `ago`
+checks `./...`.
 
-ago always skips `vendor/` and `testdata/`. Third-party code is not yours to
+| Exit | Meaning |
+| ---- | ------- |
+| `0`  | no violations |
+| `1`  | at least one violation |
+| `2`  | `ago` could not complete the run |
+
+`vendor/` and `testdata/` are always skipped. Third-party code is not yours to
 restrict.
 
-| Exit status | Meaning |
-| --- | --- |
-| `0` | The run completed with no findings or stale ignores. |
-| `1` | The run found a rule violation or stale ignore. |
-| `2` | ago could not complete a meaningful run. |
+## Motivation
 
-## Configure the rule policy
+Go's value was never any single feature. A large team could read each other's
+code without negotiating a dialect.
+Pike's own summary of what the project got right ends on this: Go code looks
+and works the same regardless of who wrote it. It is largely free of factions
+that use different subsets of the language.
 
-ago reads `.ago.yml` from the working directory or the nearest parent.
+Recent releases widened the language faster than that property can absorb. Go
+1.26 let a generic type refer to itself in its own type parameter list. Go
+1.26 also let `new` take an expression rather than a type. Go 1.27 let methods
+declare their own type parameters. Each change is defensible in isolation.
+Together they add ways to express things that were already expressible.
+
+That is the specific kind of growth that produces dialects.
+
+`ago` does not argue those features are bad. It argues that a given codebase
+benefits from picking one way to say each thing. Enforce that choice. Do not
+leave it to review. Every rule here removes an alternative. None adds one.
+
+## Rules
+
+A rule is **on by default** when the construct it forbids has a direct,
+mechanical replacement that no reasonable codebase would miss. It is **off by
+default** when the construct has legitimate uses. Banning it is then a genuine
+policy choice rather than a cleanup.
+
+The survey measured counts below against the `go1.26.5` standard library, over
+non-test files, excluding `testdata/`, `vendor/`, and `_asm/`. That population
+is 3,916 files. Reproduce them with the script in
+[`docs/stdlib-survey.md`](docs/stdlib-survey.md).
+
+### On by default
+
+#### `no-self-referential-constraints`
+
+Reverts Go 1.26. Before Go 1.26 the compiler rejected `type Adder[A Adder[A]]
+interface{ Add(A) A }` as an invalid recursive type. Go 1.26 accepts it.
+
+This rule reports exactly that construct: the declared type's own name appearing
+inside its own type parameter list.
+
+```go
+type Adder[A Adder[A]] interface{ Add(A) A }   // reported
+type Node[T Cloneable[T]] struct{ v T }        // not reported — legal since Go 1.18
+type Graph[N any, E Edge[N]] struct{}          // not reported — sibling parameter
+```
+
+Detection is syntactic and catches direct self-reference. Mutual recursion
+across two declarations is not reported. For the F-bounded shapes that were
+always legal, see [`no-f-bounded-constraints`](#no-f-bounded-constraints).
+
+#### `no-new-expr`
+
+Reverts Go 1.26. `new(f(x))` collapses declaration, initialization, and
+address-taking into one expression. The two-line form with a named variable says
+the same thing. A reader can follow it left to right.
+
+```go
+p := new(f(x))            // reported
+v := f(x); p := &v        // the replacement
+p := new(Foo)             // not reported — Foo is a type
+```
+
+The rule uses full type information. So the rule reports `new(someVariable)`
+even where a purely syntactic check could not tell a type from a value.
+
+#### `no-generic-methods`
+
+Reverts Go 1.27. Rewrite any such method as a package-level function that
+takes the receiver as its first argument. The feature buys call-site chaining.
+It costs a second place to look for a type's operations.
+
+> **Dormant before Go 1.27.** On earlier toolchains `go/parser` rejects generic
+> methods itself, so the construct never reaches this rule. That is correct.
+> The language is already enforcing it. The rule does nothing for you until
+> you upgrade.
+
+#### `no-naked-return`
+
+A bare `return` in a function with named results forces the reader to scroll up
+to learn the returned values. It also silently returns whatever the result
+variables hold at that point. Naming the values costs nothing and survives
+later edits to the body.
+
+The rule checks function literals against their own result list rather than the
+enclosing function's. It reports a naked return inside a closure when the
+closure itself declares named results.
+
+#### `no-dot-import`
+
+Dot imports make every identifier in a file ambiguous as to origin. That
+defeats both the reader and `grep`.
+
+The standard library does use them in production code. The pattern is
+essentially one: `go/types` and `cmd/compile/internal/types2` (26 files each)
+dot-import `internal/types/errors`, a package of nothing but error-code
+constants. That is the narrow case where this rule is wrong. A constants-only
+package referenced densely enough that qualifying every use is pure noise.
+Outside those 53 files, only tests in the standard library use dot imports
+(224 files).
+
+#### `no-goto`
+
+Labelled `break` and `continue` cover the loop cases. A `goto` that jumps
+anywhere else does control flow the reader has to simulate by hand.
+
+This is a rule for application code. It is not a claim that `goto` is vestigial.
+The standard library contains 522 `goto` statements in non-test files, only 19
+of them generated. They concentrate in `syscall` (120), `runtime` (77), and the
+two type checkers (71). That code is either performance-critical or a
+hand-written state machine. If you write that kind of code, turn this off.
+
+#### `no-invalid-ignore`
+
+Every `//ago:ignore` directive must name a known rule and give a reason. See
+[Suppressing a finding](#suppressing-a-finding). This rule is what makes the
+suppression syntax safe to hand to an agent. A directive that does not parse,
+names no rule, names a missing rule, or omits its reason suppresses nothing.
+This rule reports that directive.
+
+### Off by default
+
+#### `no-f-bounded-constraints`
+
+Reports F-bounded polymorphism. A type parameter appears inside its own
+constraint, as in `type Node[T Cloneable[T]]` or `func algo[A Adder[A]](x A) A`.
+
+This is **not** a version revert. Generics in Go 1.18 made this construct
+legal. It is the most abstraction-dense shape the type system allows. An
+ordinary interface plus a concrete type usually reaches the same shape, so
+some codebases choose to ban it. That is a house-style decision. That is why
+the rule is off by default.
+
+A constraint that refers to a *sibling* type parameter, such as `type Graph[N
+any, E Edge[N]]`, is not reported. The parameter does not appear in its own
+constraint.
+
+#### `no-generic-decls`
+
+Reverts Go 1.18 entirely: no type parameters on any func or type declaration.
+The strictest rule here and the least likely to be right for you. Reasonable for
+a codebase with no container libraries of its own. Hostile otherwise. Only 115
+non-test files in the standard library declare a generic func or type. The
+ones that do are the ones you import.
+
+It does not stop you *calling* generic functions such as `slices.Sort`.
+
+#### `no-redundant-short-decl`
+
+One way to introduce a variable instead of several. 2,522 of the standard
+library's 3,916 non-test files use `:=`. Turning this on is a decision about
+your code, not a defect count.
+
+The rule does not ban `:=` outright, because `:=` is load-bearing where `var` is
+a syntax error:
+
+```go
+switch t := x.(type) { ... }   // var is not allowed in a switch guard
+for i, v := range xs { ... }   // no var form exists
+```
+
+It reports `:=` only in plain statement position, where `var` is a drop-in
+replacement. Hoisting an `if` or `for` header declaration out to a preceding
+`var` is legal but widens the variable's scope. The rule treats those as
+load-bearing too. A blanket ban would force *adding* syntax to the language.
+`ago` will not do that.
+
+#### `no-embedded-field`
+
+Embedding promotes methods and fields implicitly. A type's method set stops
+being visible at its declaration. Naming the field costs one selector per use.
+
+Off by default because embedding is thoroughly idiomatic. The standard library
+has 680 embedded fields across 273 non-test files, including 24 bare
+`sync.Mutex` or `sync.RWMutex` embeds. Turning this on is a real break with
+house Go, not a tidy-up.
+
+#### `no-init-func`
+
+`init` runs before `main` in an order determined by the import graph. That
+makes initialization failures hard to localize and hard to test. Off by default
+because avoiding it entirely requires an explicit wiring convention the tool
+cannot supply.
+
+#### `no-blank-import-outside-main`
+
+Blank imports register side effects through the import graph. Program behavior
+then depends on which packages the linker includes. Confining them
+to `main` keeps that explicit. Off by default because some driver-registration
+patterns legitimately need them in library packages.
+
+## Configuration
+
+`ago` reads `.ago.yml` from the working directory or the nearest parent. Write a
+starter with `ago -init`.
 
 ```yaml
 enable:
-  - default
-  - no-init-func
+  - no-goto
+  - no-naked-return
+  - no-new-expr
 
 disable:
-  - no-goto
+  - no-dot-import
 
-tests: false
-exclude:
+tests: false        # also check _test.go files
+exclude:            # vendor and testdata are always skipped
   - "*.pb.go"
   - third_party/*
 ```
 
-`enable` accepts rule names and the meta-names `default` and `all`. `disable`
-wins over `enable`. Command flags `-rules` and `-all` override the file.
+`enable` also accepts the meta-names `default` (the default rule set) and `all`
+(every rule). So `enable: [default]` plus `disable: [no-goto]` is the usual
+shape. `disable` wins over `enable`.
 
-ago matches each `exclude` pattern against three path shapes:
+`ago` matches an `exclude` pattern against the whole slash-separated path,
+against each path element, and against each leading path prefix. So `*.pb.go`
+matches by name. `generated` excludes any directory with that name at any
+depth. `third_party/*` excludes a whole subtree.
 
-- the complete slash-separated path.
-- each path element.
-- each leading path prefix.
+Unknown keys are an error rather than a silent no-op. A typo in your config
+fails the run instead of quietly disabling a rule.
 
-Thus, `*.pb.go` matches a file name, `generated` matches that directory at any
-depth, and `third_party/*` matches that subtree.
+Precedence, strongest first: `-rules` / `-all` → `.ago.yml` → defaults. Use
+`-config path` to point at a specific file. Use `-no-config` to ignore any file
+on disk.
 
-Unknown keys and unknown rule names stop the run. A policy typo cannot disable
-a rule silently. Use `-config path` to name a file. Use `-no-config` to ignore
-all policy files.
-
-## Fix or suppress a finding
-
-Fix source code when the selected policy applies. Each finding includes the
-rule name. Run `go tool ago -explain <rule>` for the full rationale and rule
-boundary.
-
-Use a suppression only when the local construct is a justified exception:
+## Suppressing a finding
 
 ```go
 //ago:ignore no-goto -- hand-written state machine, see docs/parser.md
 goto retry
 ```
 
-The directive applies to the next line. A top-level `//ago:ignore-file`
-directive applies to its file. Both forms accept a comma-separated rule list
-or `*`.
+The directive applies to the following line. `//ago:ignore-file` at the top of a
+file applies to the whole file. Both take a comma-separated rule list, or `*`
+for every rule.
 
-Every suppression must name a known rule and include a `--` reason. An invalid
-directive suppresses nothing, and `no-invalid-ignore` reports it. Run with
-`-stale-ignores` to find a suppression that no longer covers a finding.
+**The reason is mandatory.** A directive with no `--` reason, with no rule named,
+or naming a rule that does not exist suppresses nothing.
+[`no-invalid-ignore`](#no-invalid-ignore) reports it. Suppression that costs
+nothing gets used reflexively. This one costs a sentence.
 
-## Machine contract for coding agents
+Run `ago -stale-ignores ./...` to find directives that no longer suppress
+anything. That is how a suppression gets deleted after you fix the code it
+covered.
 
-ago exposes policy and results as stable data. A coding agent does not need to
-parse this README.
-
-Discover the active rules:
-
-```sh
-go tool ago -list -format json
-```
-
-Each catalogue entry includes its name, analyzer ident, summary, rationale,
-default and active state, Go release boundary, severity, and documentation URL.
-
-Read findings and incomplete-run errors:
+## Output formats
 
 ```sh
-go tool ago -stale-ignores -format json ./...
+ago -format text ./...     # default, one finding per line
+ago -format json ./...     # stable schema, for tools and agents
+ago -format sarif ./...    # SARIF 2.1.0, for GitHub code scanning
+ago -format github ./...   # ::error workflow commands, inline PR annotations
 ```
+
+The JSON schema is stable:
 
 ```json
 {
-  "version": "v0.1.1",
+  "version": "1.0.0",
   "rules": ["no-dot-import", "no-goto", "no-naked-return"],
   "findings": [
     {
@@ -214,7 +331,7 @@ go tool ago -stale-ignores -format json ./...
       "column": 2,
       "endLine": 42,
       "endColumn": 8,
-      "docURL": "https://github.com/agentstation/ago/blob/main/docs/rules.md#no-naked-return"
+      "docURL": "https://github.com/agentstation/ago#no-naked-return"
     }
   ],
   "staleIgnores": [],
@@ -222,136 +339,172 @@ go tool ago -stale-ignores -format json ./...
 }
 ```
 
-ago sorts and deduplicates findings. The JSON output is byte-identical for the
-same version, policy, and source tree. Existing JSON fields keep their names
-and meanings. Later versions can add fields.
+`version` is the `ago` version that produced the report. `rules` is the rule set
+that actually ran. Only `-stale-ignores` fills `staleIgnores`.
 
-A package load or parse failure appears in `errors`. ago continues with each
-package that it can analyze. Exit status 2 means that no usable result was
-available, so an empty finding list is not a clean result.
+`ago` sorts findings by file, line, column, then rule, and deduplicates them.
+The output is byte-identical across runs and safe to diff in CI.
 
-### Optional Agent Skill
+A package that fails to load or parse lands in `errors`. It does **not** stop
+the run. You still get every finding from every package that did load. The
+exit status is 2 to tell you the run was incomplete.
 
-The optional skill teaches compatible coding agents the discovery, repair,
-suppression, and verification loop:
+## For coding agents
 
-```sh
-gh skill install agentstation/skills ago --agent codex --scope project
-```
+`ago` serves an agent harness as much as a person.
 
-Change `--agent` for another supported host. The skill is an aid, not an
-enforcement mechanism. The committed Go tool, policy, agent instruction, and
-CI workflow remain authoritative.
-
-## Rules
-
-Seven rules are on by default. Their constructs have direct replacements.
-Six rules are off by default because they encode a project-specific choice.
-
-| Rule | Default | Restriction |
-| --- | --- | --- |
-| [`no-self-referential-constraints`](docs/rules.md#no-self-referential-constraints) | on | A generic type cannot name itself in its own type parameter list. |
-| [`no-new-expr`](docs/rules.md#no-new-expr) | on | `new` accepts a type, not an expression value. |
-| [`no-generic-methods`](docs/rules.md#no-generic-methods) | on | Methods cannot declare type parameters. |
-| [`no-naked-return`](docs/rules.md#no-naked-return) | on | A return in a function with named results must name its values. |
-| [`no-dot-import`](docs/rules.md#no-dot-import) | on | Imports must keep a package qualifier. |
-| [`no-goto`](docs/rules.md#no-goto) | on | `goto` is forbidden. |
-| [`no-invalid-ignore`](docs/rules.md#no-invalid-ignore) | on | Each suppression must name known rules and give a reason. |
-| [`no-f-bounded-constraints`](docs/rules.md#no-f-bounded-constraints) | off | A type parameter cannot appear inside its own constraint. |
-| [`no-generic-decls`](docs/rules.md#no-generic-decls) | off | Functions and types cannot declare type parameters. |
-| [`no-redundant-short-decl`](docs/rules.md#no-redundant-short-decl) | off | Use `var` where `:=` is not load-bearing. |
-| [`no-embedded-field`](docs/rules.md#no-embedded-field) | off | Struct fields must have names. |
-| [`no-init-func`](docs/rules.md#no-init-func) | off | Packages cannot declare `func init()`. |
-| [`no-blank-import-outside-main`](docs/rules.md#no-blank-import-outside-main) | off | Only package `main` can use a blank import. |
-
-The [rule reference](docs/rules.md) gives the rationale, replacement, evidence,
-and non-findings for each rule. `go tool ago -list -format json` carries the
-same rule catalogue in machine-readable form.
-
-## Integrations
-
-### GitHub output and SARIF
-
-Use workflow-command output for inline pull request annotations:
+**Discover the rules.** `ago -list -format json` emits the full catalogue.
+It includes name, summary, complete rationale, default state, whether it
+reverts a specific Go release, severity, and doc URL. An agent can decide
+what a rule means without fetching this page.
 
 ```sh
-go tool ago -format github ./...
+ago -list -format json | jq -r '.rules[] | select(.enabled) | .name'
 ```
 
-Use SARIF 2.1.0 for GitHub code scanning or another SARIF consumer:
+**Read the findings.** `ago -format json` gives one flat array with a `docURL`
+per finding. `ago -explain <rule>` prints the same rationale a human would read.
 
-```yaml
-- run: go tool ago -format sarif ./... > ago.sarif
-  continue-on-error: true
-- uses: github/codeql-action/upload-sarif@v4
-  with:
-    sarif_file: ago.sarif
+**Trust the exit code.** `0` clean, `1` violations, `2` incomplete. An agent can
+branch on `2` to report a broken build rather than an empty success.
+
+**Put the policy in the repo.** A committed `.ago.yml` means an agent reads the
+house style from the working tree instead of from a prompt. The same rules
+apply to every contributor, human or not.
+
+**Suppress honestly.** The mandatory `--` reason means an agent has to state why
+it silences a rule. `-stale-ignores` finds the ones that outlived their
+cause.
+
+Recommended `AGENTS.md` snippet for a repo that adopts `ago`:
+
+```markdown
+Run `ago ./...` before you finish. It enforces this repo's Go subset.
+Run `ago -list` to see the active rules and `ago -explain <rule>` for the
+rationale behind one. Do not suppress a finding without a `--` reason, and do
+not edit `.ago.yml` to make a finding go away.
 ```
 
-### Go analysis drivers
+## Use as a library
 
-Every rule is a `*analysis.Analyzer`. A custom analysis command can compose
-them with `multichecker`:
+Every rule is a `*analysis.Analyzer`. So `ago` plugs into anything built on
+`golang.org/x/tools/go/analysis`.
 
 ```go
-package main
-
-import (
-	"github.com/agentstation/ago"
-	"golang.org/x/tools/go/analysis/multichecker"
-)
+import "github.com/agentstation/ago"
 
 func main() {
 	multichecker.Main(ago.Analyzers()...)
 }
 ```
 
-A binary built with `multichecker` supports `go vet -vettool`. The shipped
-`cmd/ago` command uses its own policy, JSON, suppression, and exit contracts.
-It is not a vet tool.
-
-Library callers can inspect rules or run the checker directly:
-
 ```go
-rules := ago.Rules()
-rule, ok := ago.Lookup("no-goto")
-report, err := ago.Check(ago.Options{Patterns: []string{"./..."}})
+rules := ago.Rules()                 // full catalogue with metadata
+rule, ok := ago.Lookup("no-goto")    // by kebab name or analyzer ident
+report, err := ago.Check(ctx, ago.Options{Patterns: []string{"./..."}})
 ```
 
 See the [package documentation](https://pkg.go.dev/github.com/agentstation/ago)
-for the complete API.
+for the full surface.
 
 ### golangci-lint
 
-ago ships as a [golangci-lint module
-plugin](https://golangci-lint.run/plugins/module-plugins/). Add it to
-`.custom-gcl.yml`:
+`ago` ships as a [module plugin](https://golangci-lint.run/plugins/module-plugins/).
+Add it to `.custom-gcl.yml`:
 
 ```yaml
-version: v2.12.2
+version: v2.6.0
 plugins:
   - module: github.com/agentstation/ago
     import: github.com/agentstation/ago/plugin/golangci
     version: latest
 ```
 
-Run `golangci-lint custom`, then enable the `ago` custom linter in
-`.golangci.yml`. Pin the plugin version before you commit the configuration.
+Then `golangci-lint custom` and enable `ago` in your `.golangci.yml`.
 
-## Project
+## CI
 
-- [Design and scope](docs/design.md)
-- [Rule reference](docs/rules.md)
-- [Contributing](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
-- [Changelog](CHANGELOG.md)
+```yaml
+- uses: actions/setup-go@v6
+  with:
+    go-version: stable
+- run: go install github.com/agentstation/ago/cmd/ago@latest
+- run: ago -format github ./...
+```
+
+For code scanning, emit SARIF and upload it:
+
+```yaml
+- run: ago -format sarif ./... > ago.sarif
+  continue-on-error: true
+- uses: github/codeql-action/upload-sarif@v4
+  with:
+    sarif_file: ago.sarif
+```
+
+## Scope
+
+These rules encode one project's taste, not Rob Pike's. His 2024 retrospective
+*What We Got Right, What We Got Wrong* does not list variable declaration syntax
+as a mistake. On generics it argues close to the opposite of this tool. Defining
+generic containers in the language without giving programmers access to that
+genericity was arguably an error. Treat `ago` as a house style, not an appeal
+to authority.
+
+## The fork alternative
+
+If you want compiler-level enforcement, the patch is genuinely small. Both Go
+parsers rejected generic methods up through 1.26. Go 1.27 deletes those
+checks. Restoring them is a two-site revert.
+
+`src/cmd/compile/internal/syntax/parser.go`, in `funcType`:
+
+```diff
+ var tparamList []*Field
+ if p.got(_Lbrack) {
++    if context == "method" {
++        p.syntaxErrorAt(typ.pos, "method must have no type parameters")
++    }
+     if p.tok == _Rbrack {
+```
+
+`src/go/parser/parser.go`, in `parseFuncDecl`:
+
+```diff
++if recv != nil && tparams != nil {
++    p.error(tparams.Opening, "method must have no type parameters")
++}
+```
+
+Then `./make.bash`.
+
+**Why this repo is a linter instead.** The stock standard library uses the
+things you would ban. 2,522 of 3,916 non-test files use `:=`. 115 declare
+generic funcs or types. A compiler that rejects those constructs cannot build
+its own standard library. So a real fork needs scoping.
+
+Restrictions apply to first-party packages only, exempting `GOROOT` and the
+module cache. That is the part that stops being a small patch. It is what a
+linter gives you for free.
+
+A fork also means a second toolchain to distribute and pin
+(`GOTOOLCHAIN=local`). It means a rebase every six months. It means a `gopls`
+that disagrees with your compiler unless you fork that too.
+
+The reasonable split: fork for the one or two constructs a rogue dependency
+could sneak into your binary. Use `ago` for everything that is house policy.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). New rules need a rationale that says
+what the construct costs a reader, a `testdata` fixture, and an honest default.
+If banning it is a taste call, it ships off by default.
 
 ## License
 
-ago is available under either license, at your option:
+Dual-licensed under either of
 
-- Apache License 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
-- MIT License ([LICENSE-MIT](LICENSE-MIT))
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
 
-The [dual-license grant and contribution terms](COPYRIGHT) apply to the
-repository.
+at your option.

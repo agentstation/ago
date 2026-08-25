@@ -31,11 +31,6 @@ passed.
 
 - `.github/CODEOWNERS` named `@agentstation/maintainers`, a team that does
   not exist. It now names `@jackspirou` and `@savkat`.
-- pkg.go.dev treated the dual-license grant in `LICENSE` as an unknown
-  license and hid the package documentation. `COPYRIGHT` now holds the grant.
-  The recognized `LICENSE-APACHE` and `LICENSE-MIT` files remain unchanged.
-- Commands built through `go tool` or `go install` reported version `dev`.
-  They now read the pinned module version from Go build information.
 
 ### Changed
 
@@ -43,9 +38,6 @@ passed.
 - Developer-facing prose now follows the project's strict technical-writing
   rules. `GLOSSARY.md` and `.agents/technical-writing.toml` define the
   terms and the linter config. `make prose` runs the check.
-- The primary adoption path now pins ago as a Go module tool dependency.
-  The README separates adoption, coding-agent contracts, and integrations.
-  Detailed rule and design references now live under `docs/`.
 
 ## [0.1.0] - 2026-08-22
 
