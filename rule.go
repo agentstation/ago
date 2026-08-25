@@ -49,9 +49,9 @@ type Rule struct {
 	Analyzer *analysis.Analyzer
 }
 
-// DocURL returns the anchor in the README that documents the rule.
+// DocURL returns the rule-reference anchor that documents the rule.
 func (r Rule) DocURL() string {
-	return "https://github.com/agentstation/ago#" + r.Name
+	return "https://github.com/agentstation/ago/blob/main/docs/rules.md#" + r.Name
 }
 
 // registry holds every rule in registration order.
