@@ -1,6 +1,6 @@
 # Surveying the standard library
 
-Every count in the README comes from a measurement, not from memory. This
+Every count in the rule reference comes from a measurement, not from memory. This
 document holds the method so you can reproduce and update the numbers.
 
 ## Population
@@ -9,7 +9,7 @@ All `.go` files under `$(go env GOROOT)/src`, excluding any `testdata/`,
 `vendor/`, or `_asm/` directory. Most counts further exclude `_test.go` files.
 A rule that fires only in tests is a different argument. State which
 population a number came from. Mixing them is how the first version of this
-README ended up quoting a figure that was 60% too high.
+rule reference could otherwise quote an incorrect figure.
 
 As of `go1.26.5`: **5,594** files in total, **3,916** of them non-test.
 
@@ -47,7 +47,7 @@ number is 115.
 
 Use `go/ast`: walk each file, and count a `*ast.FuncDecl` or `*ast.TypeSpec`
 whose `TypeParams` is non-nil. For embedded fields, count `*ast.StructType`
-fields whose `Names` is empty. The full program used for the README figures is
+fields whose `Names` is empty. The full program used for the rule-reference figures is
 short enough to rewrite from that description. Keep it out of the module so it
 does not become a dependency.
 

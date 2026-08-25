@@ -17,7 +17,7 @@ func newAnalyzer(name, doc string, run func(*checkPass)) *analysis.Analyzer {
 	a := &analysis.Analyzer{
 		Name:     identName(name),
 		Doc:      doc,
-		URL:      "https://github.com/agentstation/ago#" + name,
+		URL:      "https://github.com/agentstation/ago/blob/main/docs/rules.md#" + name,
 		Requires: []*analysis.Analyzer{ignoresAnalyzer},
 	}
 	a.Run = func(pass *analysis.Pass) (any, error) {
