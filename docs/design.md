@@ -1,23 +1,33 @@
 # Design and scope
 
-ago is a restriction-only linter. It gives a project a mechanically enforced
-subset of legal Go.
+ago keeps one Go dialect across a codebase. It gives a project a mechanically
+enforced subset of legal Go.
 
 ## Motivation
 
-Go's value was never one feature. A large team could read its code without
-negotiating a dialect. Rob Pike's retrospective, *What We Got Right, What We
-Got Wrong*, states that Go code looks and works the same across programmers.
-The language is largely free of factions that use different subsets.
+Go's original design treated simplicity, safety, and readability as primary
+goals. It also stated a minimal-language goal: one way to write a piece of
+code. See [Go design
+history](https://go.dev/talks/2015/gophercon-goevolution.slide).
+
+Go's productive kind of boring follows from that restraint. A developer can
+read unfamiliar code without first learning another author's dialect. The same
+principle supports `gofmt`: uniform code helps teams work across authors. See
+[Go at Google](https://go.dev/talks/2012/splash.article).
+
+This need remains current. The [2024 Go Developer
+Survey](https://go.dev/blog/survey2024-h2-results) found that consistent coding
+standards were the most common high-value team problem. The [2025
+survey](https://go.dev/blog/survey2025) also found broad AI coding-tool use and
+continued concerns about generated-code quality.
 
 Recent releases widened the language. Go 1.26 let a generic type refer to
 itself in its type parameter list. It also let `new` accept an expression
 instead of a type. Go 1.27 let methods declare type parameters. Each construct
 has another legal expression.
 
-ago does not claim that these features are bad. A project can benefit from one
-way to express each operation. The linter enforces that choice instead of
-leaving it to review.
+ago does not claim that these features are bad. Each project selects the forms
+that fit its codebase. The linter applies that choice before review.
 
 Each ago rule removes an alternative. No rule adds syntax, rewrites code, or
 changes semantics.

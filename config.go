@@ -34,6 +34,9 @@ const (
 // means every developer, every CI job, and every coding agent enforces the
 // same subset without extra instruction.
 type Config struct {
+	// Version names the config schema. Zero accepts an unversioned config from
+	// ago v0.1. Version 1 is the current schema.
+	Version int `yaml:"version"`
 	// Enable lists rules to turn on. The special value "default" expands to
 	// the default rule set and "all" expands to every rule. An empty list
 	// means the default set.
@@ -135,6 +138,9 @@ func findConfig(dir string) (string, bool) {
 // Enable only. Errors carry no path prefix. A caller that read the config from
 // a file should prefix them with its path.
 func (c *Config) Validate() error {
+	if c.Version != 0 && c.Version != 1 {
+		return fmt.Errorf("version: unsupported schema %d; want 1", c.Version)
+	}
 	check := func(field string, names []string) error {
 		for _, n := range names {
 			if n == setDefault || n == setAll {
@@ -170,6 +176,9 @@ func (c *Config) Validate() error {
 		}
 		if strings.ContainsRune(p, 0) {
 			return fmt.Errorf("exclude: pattern contains NUL")
+		}
+		if _, err := filepath.Match(p, ""); err != nil {
+			return fmt.Errorf("exclude: invalid pattern %q: %w", p, err)
 		}
 	}
 	return nil
@@ -247,47 +256,25 @@ func (c *Config) Skip(path string) bool {
 	return false
 }
 
-// ExampleConfig returns a commented config listing every rule, for "ago
-// -init". Rules that are on by default stay uncommented.
+// ExampleConfig returns the minimal policy that "ago -init" writes. The
+// "default" meta-name follows the defaults in the pinned ago version.
 func ExampleConfig() string {
-	var b strings.Builder
-	b.WriteString("# ago rule policy. See https://github.com/agentstation/ago#rules\n")
-	b.WriteString("# Run \"ago -list\" for the rule set this binary supports.\n\n")
-	b.WriteString("enable:\n")
-	for i, r := range registry {
-		if i > 0 {
-			b.WriteByte('\n')
-		}
-		prefix := "  # "
-		if r.Default {
-			prefix = "  - "
-		}
-		fmt.Fprintf(&b, "%s%-32s # %s.\n", prefix, r.Name, commentSummary(r.Summary))
-	}
-	b.WriteString("\ndisable: []\n")
-	b.WriteString("\n# Check _test.go files as well as production files.\ntests: false\n")
-	b.WriteString("\n# Path patterns to skip. The tool always skips vendor and testdata.\nexclude: []\n")
-	return b.String()
-}
+	return `# yaml-language-server: $schema=https://raw.githubusercontent.com/agentstation/ago/main/ago.schema.json
+# ago uses its built-in defaults when this file is absent.
+# "default" follows the defaults in the ago version pinned by go.mod.
+# Run "go tool ago -list" to inspect the resolved policy.
 
-// commentSummary capitalizes summary sentences so YAML comments split.
-func commentSummary(s string) string {
-	s = strings.TrimSpace(strings.TrimSuffix(s, "."))
-	if s == "" {
-		return s
-	}
-	var b strings.Builder
-	capNext := true
-	for _, r := range s {
-		if capNext && r >= 'a' && r <= 'z' {
-			r -= 'a' - 'A'
-			capNext = false
-		} else if r != ' ' {
-			capNext = r == '.'
-		}
-		b.WriteRune(r)
-	}
-	return b.String()
+version: 1
+enable:
+  - default
+disable: []
+
+# Check _test.go files as well as production files.
+tests: false
+
+# Path patterns to skip. ago always skips vendor and testdata.
+exclude: []
+`
 }
 
 // sortedNames is a small helper used by the command's error messages.

@@ -12,6 +12,30 @@ passed.
 
 ## [Unreleased]
 
+### Added
+
+- Report the rule source, config path, test setting, and exclude patterns in
+  `-list`. JSON reports and the rule catalogue now include `schemaVersion: 1`.
+- Publish `ago.schema.json` for `.ago.yml` editor validation. New generated
+  policies declare config schema version 1. Unversioned v0.1 policies remain
+  valid.
+- Add command tests for help output, policy discovery, and config creation.
+
+### Changed
+
+- Make the zero-config Go module path the primary adoption flow. A project can
+  run the pinned default policy after `go get -tool` without `.ago.yml`.
+- Make `-init` an optional customization command. It writes a minimal policy
+  at the nearest `go.mod` or `go.work` root and refuses a competing child
+  policy.
+- Lead the README, package docs, command help, and release notes with ago's
+  shared-dialect goal.
+
+### Fixed
+
+- Print `-h` once on stdout, including the complete flag list.
+- Reject an invalid `exclude` glob instead of ignoring it.
+
 ## [0.1.1] - 2026-08-25
 
 ### Security

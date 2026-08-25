@@ -1,6 +1,7 @@
 package ago
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"slices"
@@ -66,6 +67,11 @@ func TestLoadConfig(t *testing.T) {
 			},
 		},
 		{
+			name:    "unsupported schema version fails",
+			body:    "version: 2\n",
+			wantErr: "unsupported schema 2",
+		},
+		{
 			name:    "unknown rule fails loudly",
 			body:    "enable: [no-gotoo]\n",
 			wantErr: `unknown rule "no-gotoo"`,
@@ -84,6 +90,11 @@ func TestLoadConfig(t *testing.T) {
 			name:    "empty exclude pattern is rejected",
 			body:    "exclude: ['']\n",
 			wantErr: "empty pattern",
+		},
+		{
+			name:    "invalid exclude pattern is rejected",
+			body:    "exclude: ['[']\n",
+			wantErr: "invalid pattern",
 		},
 	}
 	for _, tt := range tests {
@@ -191,6 +202,50 @@ func TestExampleConfigIsValid(t *testing.T) {
 	}
 	if got := ruleNames(cfg.Enabled(nil)); !slices.Equal(got, DefaultNames()) {
 		t.Errorf("enabled = %v, want the default set %v", got, DefaultNames())
+	}
+	if cfg.Version != 1 {
+		t.Errorf("version = %d, want 1", cfg.Version)
+	}
+	if !slices.Equal(cfg.Enable, []string{"default"}) {
+		t.Errorf("enable = %v, want [default]", cfg.Enable)
+	}
+}
+
+func TestConfigSchemaRuleNames(t *testing.T) {
+	b, err := os.ReadFile("ago.schema.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var schema struct {
+		Properties struct {
+			Enable struct {
+				Items struct {
+					Enum []string `json:"enum"`
+				} `json:"items"`
+			} `json:"enable"`
+			Disable struct {
+				Items struct {
+					Enum []string `json:"enum"`
+				} `json:"items"`
+			} `json:"disable"`
+		} `json:"properties"`
+	}
+	if err := json.Unmarshal(b, &schema); err != nil {
+		t.Fatal(err)
+	}
+	wantEnable := append([]string{"default", "all"}, Names()...)
+	slices.Sort(wantEnable)
+	gotEnable := schema.Properties.Enable.Items.Enum
+	slices.Sort(gotEnable)
+	if !slices.Equal(gotEnable, wantEnable) {
+		t.Errorf("schema enable names = %v, want %v", gotEnable, wantEnable)
+	}
+	wantDisable := Names()
+	slices.Sort(wantDisable)
+	gotDisable := schema.Properties.Disable.Items.Enum
+	slices.Sort(gotDisable)
+	if !slices.Equal(gotDisable, wantDisable) {
+		t.Errorf("schema disable names = %v, want %v", gotDisable, wantDisable)
 	}
 }
 

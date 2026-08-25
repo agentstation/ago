@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/agentstation/ago/main/ago.schema.json",
+  "title": "ago rule policy",
+  "description": "Configuration for the ago restriction-only Go linter.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "description": "Configuration schema version.",
+      "type": "integer",
+      "const": 1
+    },
+    "enable": {
+      "description": "Rules or rule sets to enable. An empty list selects the default set.",
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 4096,
+      "items": {
+        "type": "string",
+        "enum": [
+          "default",
+          "all",
+          "no-self-referential-constraints",
+          "no-new-expr",
+          "no-generic-methods",
+          "no-naked-return",
+          "no-dot-import",
+          "no-goto",
+          "no-invalid-ignore",
+          "no-f-bounded-constraints",
+          "no-generic-decls",
+          "no-redundant-short-decl",
+          "no-embedded-field",
+          "no-init-func",
+          "no-blank-import-outside-main"
+        ]
+      }
+    },
+    "disable": {
+      "description": "Rules to disable after ago resolves enable.",
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 4096,
+      "items": {
+        "type": "string",
+        "enum": [
+          "no-self-referential-constraints",
+          "no-new-expr",
+          "no-generic-methods",
+          "no-naked-return",
+          "no-dot-import",
+          "no-goto",
+          "no-invalid-ignore",
+          "no-f-bounded-constraints",
+          "no-generic-decls",
+          "no-redundant-short-decl",
+          "no-embedded-field",
+          "no-init-func",
+          "no-blank-import-outside-main"
+        ]
+      }
+    },
+    "tests": {
+      "description": "Check _test.go files.",
+      "type": "boolean",
+      "default": false
+    },
+    "exclude": {
+      "description": "Path patterns to skip.",
+      "type": "array",
+      "maxItems": 1024,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 4096,
+        "pattern": "^[^\\u0000]+$"
+      }
+    }
+  }
+}
