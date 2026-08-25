@@ -68,8 +68,8 @@ On macOS or Linux with Homebrew:
 brew install agentstation/tap/ago
 ```
 
-Release archives, checksums, software bills of materials, and build provenance
-are available on the [release page](https://github.com/agentstation/ago/releases).
+Release archives, checksums, and software bills of materials are available on
+the [release page](https://github.com/agentstation/ago/releases).
 
 ## Make the policy automatic
 
