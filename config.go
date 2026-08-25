@@ -13,34 +13,34 @@ import (
 	yaml "go.yaml.in/yaml/v3"
 )
 
-// ConfigName is the file ago looks for when no configuration is named on the
-// command line. ConfigNameAlt is accepted as an equivalent spelling.
+// ConfigName is the file ago looks for when the command line names no
+// configuration. ConfigNameAlt is an equivalent spelling.
 const (
 	ConfigName    = ".ago.yml"
 	ConfigNameAlt = ".ago.yaml"
 )
 
-// A Config is the on-disk rule policy for a repository. Keeping the policy in
-// the repository rather than in a command line means every developer, every CI
-// job, and every coding agent enforces the same subset without being told.
+// A Config is the on-disk rule policy for a repository. A committed policy
+// means every developer, every CI job, and every coding agent enforces the
+// same subset without extra instruction.
 type Config struct {
 	// Enable lists rules to turn on. The special value "default" expands to
 	// the default rule set and "all" expands to every rule. An empty list
 	// means the default set.
 	Enable []string `yaml:"enable"`
-	// Disable lists rules to turn off after Enable is applied.
+	// Disable lists rules to turn off after ago applies Enable.
 	Disable []string `yaml:"disable"`
-	// Tests reports whether _test.go files are checked.
+	// Tests reports whether ago checks _test.go files.
 	Tests bool `yaml:"tests"`
-	// Exclude lists path patterns, matched with [path/filepath.Match] against
-	// each path element, whose packages are skipped.
+	// Exclude lists path patterns. ago matches them with [path/filepath.Match]
+	// against each path element and skips those packages.
 	Exclude []string `yaml:"exclude"`
 
-	// path records where the config was loaded from, for error messages.
+	// path records where ago loaded the config, for error messages.
 	path string
 }
 
-// Path returns the file the config was loaded from, or "" for a default
+// Path returns the file ago loaded the config from, or "" for a default
 // config.
 func (c *Config) Path() string { return c.path }
 
@@ -51,8 +51,8 @@ const (
 )
 
 // LoadConfig reads a config file. A path of "" searches dir and each parent
-// directory for .ago.yml, stopping at the filesystem root; when no file is
-// found it returns the default config and a nil error.
+// directory for .ago.yml, stopping at the filesystem root. When the search
+// finds no file it returns the default config and a nil error.
 func LoadConfig(dir, path string) (*Config, error) {
 	if path == "" {
 		found, ok := findConfig(dir)
@@ -102,8 +102,8 @@ func findConfig(dir string) (string, bool) {
 
 // Validate reports whether every name in Enable and Disable refers to a rule
 // this build knows about. The meta-names "default" and "all" are valid in
-// Enable only. Errors are unqualified; a caller that read the config from a
-// file should prefix them with its path.
+// Enable only. Errors carry no path prefix. A caller that read the config from
+// a file should prefix them with its path.
 func (c *Config) Validate() error {
 	check := func(field string, names []string) error {
 		for _, n := range names {
@@ -171,12 +171,12 @@ func (c *Config) Enabled(overrides []string) []Rule {
 
 // Skip reports whether a file path matches any exclude pattern.
 //
-// A pattern is matched three ways, because a single one surprises in a
-// different case each time. It is matched against the whole slash-separated
-// path, so "*.pb.go" works; against each path element, so "generated" excludes
-// any directory with that name at any depth; and against each leading path
-// prefix, so "third_party/*" excludes the whole subtree rather than only the
-// files directly inside it.
+// ago matches a pattern three ways, because each way catches a different
+// surprise. It matches the whole slash-separated path, so "*.pb.go" works.
+// It matches each path element, so "generated" excludes any directory with
+// that name at any depth. It matches each leading path prefix, so
+// "third_party/*" excludes the whole subtree rather than only the files
+// directly inside it.
 func (c *Config) Skip(path string) bool {
 	if len(c.Exclude) == 0 {
 		return false
@@ -198,22 +198,45 @@ func (c *Config) Skip(path string) bool {
 }
 
 // ExampleConfig returns a commented config listing every rule, for "ago
-// -init". Rules that are on by default are left uncommented.
+// -init". Rules that are on by default stay uncommented.
 func ExampleConfig() string {
 	var b strings.Builder
 	b.WriteString("# ago rule policy. See https://github.com/agentstation/ago#rules\n")
 	b.WriteString("# Run \"ago -list\" for the rule set this binary supports.\n\n")
 	b.WriteString("enable:\n")
-	for _, r := range registry {
-		prefix := "  # - "
+	for i, r := range registry {
+		if i > 0 {
+			b.WriteByte('\n')
+		}
+		prefix := "  # "
 		if r.Default {
 			prefix = "  - "
 		}
-		fmt.Fprintf(&b, "%s%-32s # %s\n", prefix, r.Name, r.Summary)
+		fmt.Fprintf(&b, "%s%-32s # %s.\n", prefix, r.Name, commentSummary(r.Summary))
 	}
 	b.WriteString("\ndisable: []\n")
 	b.WriteString("\n# Check _test.go files as well as production files.\ntests: false\n")
-	b.WriteString("\n# Path patterns to skip. vendor and testdata are always skipped.\nexclude: []\n")
+	b.WriteString("\n# Path patterns to skip. The tool always skips vendor and testdata.\nexclude: []\n")
+	return b.String()
+}
+
+// commentSummary capitalizes summary sentences so YAML comments split.
+func commentSummary(s string) string {
+	s = strings.TrimSpace(strings.TrimSuffix(s, "."))
+	if s == "" {
+		return s
+	}
+	var b strings.Builder
+	capNext := true
+	for _, r := range s {
+		if capNext && r >= 'a' && r <= 'z' {
+			r -= 'a' - 'A'
+			capNext = false
+		} else if r != ' ' {
+			capNext = r == '.'
+		}
+		b.WriteRune(r)
+	}
 	return b.String()
 }
 

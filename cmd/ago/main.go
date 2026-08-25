@@ -14,26 +14,36 @@
 //
 // Flags:
 //
-//	-list             list the rule set and exit
-//	-explain rule     print a rule's full rationale and exit
-//	-rules a,b,c      run these rules, overriding the config file
-//	-all              run every rule
-//	-tests            also check _test.go files
-//	-format f         text, json, sarif, or github (default text)
-//	-config path      read this config instead of searching for .ago.yml
-//	-no-config        ignore any .ago.yml on disk
-//	-init             write a starter .ago.yml and exit
-//	-stale-ignores    report //ago:ignore directives that suppressed nothing
-//	-version          print the version and exit
+//	-list             List the rule set and exit.
+//
+//	-explain rule     Print a rule's full rationale and exit.
+//
+//	-rules a,b,c      Run these rules, overriding the config file.
+//
+//	-all              Run every rule.
+//
+//	-tests            Also check _test.go files.
+//
+//	-format f         text, json, sarif, or github (default text).
+//
+//	-config path      Read this config instead of searching for .ago.yml.
+//
+//	-no-config        Ignore any .ago.yml on disk.
+//
+//	-init             Write a starter .ago.yml and exit.
+//
+//	-stale-ignores    Report //ago:ignore directives that suppressed nothing.
+//
+//	-version          Print the version and exit.
 //
 // Exit status:
 //
-//	0  no violations
-//	1  at least one violation
-//	2  ago could not complete the run
+//	0  No violations.
+//	1  At least one violation.
+//	2  ago could not complete the run.
 //
-// A load or type error does not by itself abort the run: ago reports what it
-// could analyze and exits 2 only when it produced no usable result.
+// A load or type error does not by itself abort the run. The command reports
+// what it could analyze and exits 2 only when it produced no usable result.
 package main
 
 import (
@@ -49,7 +59,7 @@ import (
 )
 
 // Exit statuses. They are part of the command's contract with CI and with
-// coding agents, so they are named rather than written inline.
+// coding agents, so they have names rather than inline numbers.
 const (
 	exitClean      = 0
 	exitViolations = 1
@@ -80,7 +90,7 @@ func run(args []string, stdout, stderr *os.File) int {
 	fs.Usage = func() { usage(stderr, fs) }
 	if err := fs.Parse(args); err != nil {
 		// -h is a request that succeeded, not a failed run. Print the help to
-		// stdout so it can be piped, and exit clean.
+		// stdout so a pipe can consume it, and exit clean.
 		if errors.Is(err, flag.ErrHelp) {
 			usage(stdout, fs)
 			return exitClean
@@ -224,8 +234,9 @@ func ruleOverrides(rulesFlag string, all bool) ([]string, error) {
 	return out, nil
 }
 
-// listRules prints the rule set. In text form the enabled rules are marked, so
-// that "ago -list" doubles as a check on what the current config resolves to.
+// listRules prints the rule set. In text form an asterisk marks the enabled
+// rules, so "ago -list" doubles as a check on what the current config
+// resolves to.
 func listRules(stdout *os.File, format ago.Format, enabled []ago.Rule) {
 	on := map[string]bool{}
 	for _, r := range enabled {
@@ -336,7 +347,7 @@ func writeInitConfig(stdout, stderr *os.File) int {
 		fmt.Fprintf(stderr, "ago: %s already exists\n", path)
 		return exitError
 	}
-	// A config meant to be committed and read by the whole team is 0644.
+	// A config the whole team commits and reads is 0644.
 	if err := os.WriteFile(path, []byte(ago.ExampleConfig()), 0o644); err != nil { //nolint:gosec // team-readable by design
 		fmt.Fprintf(stderr, "ago: %v\n", err)
 		return exitError

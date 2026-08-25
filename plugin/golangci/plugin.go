@@ -9,7 +9,7 @@
 //	    version: latest
 //
 // Then run "golangci-lint custom" and enable the "ago" linter in
-// .golangci.yml. Settings select the rule set; without them the plugin runs
+// .golangci.yml. Settings select the rule set. Without them the plugin runs
 // ago's default rules.
 //
 //	linters:

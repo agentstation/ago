@@ -5,9 +5,9 @@ import (
 	"io"
 )
 
-// SARIF 2.1.0 is the interchange format GitHub code scanning ingests. Only the
-// subset of the schema ago populates is modelled here; the omitempty tags keep
-// the document to what a static analysis tool without fixes needs to emit.
+// SARIF 2.1.0 is the interchange format GitHub code scanning ingests. This
+// file models only the subset of the schema ago populates. The omitempty tags
+// keep the document to what a static analysis tool without fixes needs to emit.
 type sarifLog struct {
 	Schema  string     `json:"$schema"`
 	Version string     `json:"version"`
@@ -79,9 +79,9 @@ type sarifRegion struct {
 	EndColumn   int `json:"endColumn,omitempty"`
 }
 
-// writeSARIF emits a SARIF 2.1.0 document describing the run. Every rule that
-// ran is declared, whether or not it fired, so that a code scanning dashboard
-// can distinguish "rule passed" from "rule not configured".
+// writeSARIF emits a SARIF 2.1.0 document describing the run. It declares
+// every rule that ran, whether or not it fired, so that a code scanning
+// dashboard can distinguish "rule passed" from "rule not configured".
 func (r *Report) writeSARIF(w io.Writer) error {
 	ran := make(map[string]bool, len(r.Rules))
 	for _, name := range r.Rules {

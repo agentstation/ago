@@ -12,11 +12,11 @@ var RuleNoDotImport = register(Rule{
 defeats both the reader and grep.
 
 The standard library uses dot imports in production code in exactly one
-pattern: the two type checkers dot-import a package that holds nothing but
+pattern. The two type checkers dot-import a package that holds nothing but
 error-code constants, referenced densely enough that qualifying every use
 would be noise. That is the narrow case where this rule is wrong. Outside of
-it, the standard library's dot imports are confined to tests and to assembly
-generators excluded from the build.`,
+it, only tests and assembly generators excluded from the build use dot
+imports in the standard library.`,
 	Analyzer: newAnalyzer("no-dot-import", `reject import . "pkg"`, checkDotImport),
 })
 
@@ -37,15 +37,15 @@ var RuleNoBlankImportOutsideMain = register(Rule{
 	Default:  false,
 	Severity: Error,
 	Rationale: `A blank import registers a side effect through the import graph, which makes
-program behaviour depend on which packages happen to be linked in. Confining
+program behaviour depend on which packages the linker includes. Confining
 blank imports to package main keeps that dependency explicit and puts it
 where a reader looks for wiring.
 
 Off by default because some driver-registration patterns legitimately need a
 blank import from a library package.
 
-Files with a _test.go suffix are exempt: a test that blank-imports a driver
-is registering it for that binary only.`,
+Files with a _test.go suffix are exempt. A test that blank-imports a driver
+registers it for that binary only.`,
 	Analyzer: newAnalyzer("no-blank-import-outside-main",
 		`reject import _ "pkg" outside package main`, checkBlankImport),
 })

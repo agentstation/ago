@@ -13,7 +13,7 @@ import (
 
 // Options control one [Check] run.
 type Options struct {
-	// Dir is the directory patterns are resolved against. An empty Dir means
+	// Dir is the directory ago resolves patterns against. An empty Dir means
 	// the process working directory.
 	Dir string
 	// Patterns are go/packages patterns such as "./..." or a list of .go
@@ -21,7 +21,7 @@ type Options struct {
 	Patterns []string
 	// Rules are the rules to run. An empty Rules means the default set.
 	Rules []Rule
-	// Tests reports whether _test.go files are analyzed.
+	// Tests reports whether ago analyzes _test.go files.
 	Tests bool
 	// Config supplies exclude patterns. It may be nil.
 	Config *Config
@@ -32,9 +32,9 @@ type Options struct {
 
 // Check loads the named packages and runs the selected rules over them.
 //
-// A load or type error does not abort the run. Errors are collected into
-// [Report.Errors] and analysis continues over whatever parsed, so that a
-// single unbuildable file cannot hide every finding in the repository.
+// A load or type error does not abort the run. Check collects errors into
+// [Report.Errors] and analysis continues over whatever parsed. A single
+// unbuildable file cannot hide every finding in the repository.
 func Check(opts Options) (*Report, error) {
 	rules := opts.Rules
 	if len(rules) == 0 {
@@ -55,7 +55,7 @@ func Check(opts Options) (*Report, error) {
 
 	cfg := &packages.Config{
 		// checker.Analyze requires typed syntax for the initial packages and
-		// all their dependencies. NeedModule is added so that a driver can
+		// all their dependencies. The mode includes NeedModule so a driver can
 		// tell which module a finding belongs to.
 		Mode:  packages.LoadAllSyntax | packages.NeedModule,
 		Dir:   opts.Dir,
@@ -80,8 +80,8 @@ func Check(opts Options) (*Report, error) {
 	}
 	if opts.ReportStaleIgnores {
 		// The driver only retains an action's Result when the action is a
-		// root, so the ignore index has to be requested explicitly rather
-		// than reached through the rules that depend on it.
+		// root. Request the ignore index explicitly. Do not reach it through
+		// the rules that depend on it.
 		analyzers = append(analyzers, ignoresAnalyzer)
 	}
 
@@ -92,8 +92,8 @@ func Check(opts Options) (*Report, error) {
 
 	for act := range graph.All() {
 		// An action error in a package that already failed to load is a
-		// cascade of the load error, which is reported once above. Reporting
-		// it again per analyzer buries the root cause.
+		// cascade of the load error. Check reports that load error once above.
+		// Reporting it again per analyzer buries the root cause.
 		if act.Err != nil && len(act.Package.Errors) == 0 {
 			report.Errors = append(report.Errors,
 				fmt.Sprintf("%s: %v", act.Analyzer.Name, act.Err))

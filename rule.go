@@ -9,7 +9,7 @@ import (
 )
 
 // Severity classifies how strongly ago objects to a construct. Every rule
-// currently reports at [Error]; the field exists so that report formats with
+// currently reports at [Error]. The field exists so that report formats with
 // a severity axis, such as SARIF, carry an honest value rather than a
 // hardcoded one.
 type Severity string
@@ -25,9 +25,9 @@ const (
 // A Rule is one restriction, paired with the analyzer that enforces it.
 //
 // Name is the canonical kebab-case name used by the ago command, by .ago.yml,
-// and by //ago:ignore directives. Analyzer.Name is the same name with the
-// hyphens removed, because go/analysis requires analyzer names to be valid Go
-// identifiers; the ago command accepts either spelling.
+// and by //ago:ignore directives. The Analyzer.Name field is the same name
+// with the hyphens removed, because go/analysis requires analyzer names to be
+// valid Go identifiers. The ago command accepts either spelling.
 type Rule struct {
 	// Name is the canonical kebab-case rule name, such as "no-goto".
 	Name string
@@ -37,7 +37,7 @@ type Rule struct {
 	// the analyzer's Doc body and the text an agent reads to decide whether a
 	// violation is worth fixing or worth ignoring.
 	Rationale string
-	// Default reports whether the rule is enabled when no configuration
+	// Default reports whether ago enables the rule when no configuration
 	// selects a rule set explicitly.
 	Default bool
 	// Reverts names the Go release that introduced the construct this rule
@@ -54,13 +54,13 @@ func (r Rule) DocURL() string {
 	return "https://github.com/agentstation/ago#" + r.Name
 }
 
-// registry holds every rule in the order they are listed and reported.
+// registry holds every rule in registration order.
 var registry []Rule
 
-// register adds a rule to the registry and wires up its analyzer metadata. It
-// is called from each rule file's init-free package-level construction, and
-// panics on a duplicate name because that is a programming error in ago
-// itself, not a condition a caller can handle.
+// register adds a rule to the registry and wires up its analyzer metadata.
+// Each rule file calls it at package level. It panics on a duplicate name
+// because that is a programming error in ago itself, not a condition a caller
+// can handle.
 func register(r Rule) Rule {
 	for _, existing := range registry {
 		if existing.Name == r.Name {

@@ -34,8 +34,8 @@ func checkModule(t *testing.T, name string, opts Options) *Report {
 }
 
 // TestIgnoreDirectives exercises suppression end to end through the real
-// driver, because the interaction between the ignore index and the rules only
-// exists once both analyzers run together.
+// driver. The ignore index and the rules interact only once both analyzers
+// run together.
 func TestIgnoreDirectives(t *testing.T) {
 	gotoRule, _ := Lookup("no-goto")
 	invalid, _ := Lookup("no-invalid-ignore")
@@ -45,9 +45,9 @@ func TestIgnoreDirectives(t *testing.T) {
 	})
 
 	got := strings.Join(findingSet(t, report), "\n")
-	// Good() is suppressed; the four malformed directives suppress nothing, so
-	// each yields both an invalid-ignore finding and the goto it failed to
-	// suppress.
+	// The rule suppresses Good(). The four malformed directives suppress
+	// nothing. Each yields both an invalid-ignore finding and the goto it
+	// failed to suppress.
 	want := []string{
 		"no-invalid-ignore@ignores.go:12:2",
 		"no-goto@ignores.go:13:2",

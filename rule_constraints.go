@@ -13,15 +13,15 @@ var RuleNoSelfReferentialConstraints = register(Rule{
 	Default:  true,
 	Severity: Error,
 	Rationale: `Go 1.26 lifted the restriction that a generic type may not refer to itself in
-its type parameter list, so type Adder[A Adder[A]] interface{ Add(A) A } now
+its type parameter list. The type Adder[A Adder[A]] interface{ Add(A) A } now
 compiles. Before Go 1.26 the compiler rejected it as "invalid recursive
 type".
 
 This rule reports exactly that construct: the declared type's own name
 appearing inside its own type parameter list. It does not report F-bounded
 constraints written through a separate interface, such as
-type Node[T Cloneable[T]], which has been legal since Go 1.18 and is not
-what Go 1.26 changed. Use no-f-bounded-constraints for those.
+type Node[T Cloneable[T]]. Generics in Go 1.18 made that shape legal. It is
+not what Go 1.26 changed. Use no-f-bounded-constraints for those.
 
 Detection is syntactic and catches direct self-reference. Mutual recursion
 across two declarations is not reported.`,
@@ -52,18 +52,17 @@ var RuleNoFBoundedConstraints = register(Rule{
 	Summary:  "a type parameter may not appear in its own constraint",
 	Default:  false,
 	Severity: Error,
-	Rationale: `Reports F-bounded polymorphism: a type parameter that appears inside its own
+	Rationale: `Reports F-bounded polymorphism. A type parameter appears inside its own
 constraint, as in type Node[T Cloneable[T]] or func algo[A Adder[A]](x A) A.
 
-This is not a version revert. The construct has been legal since generics
-landed in Go 1.18, and the standard library uses it. It is the most
-abstraction-dense shape the type system allows, and it is usually reachable
-by an ordinary interface plus a concrete type, so some codebases choose to
-ban it. That is a house-style decision, which is why the rule is off by
-default.
+This is not a version revert. Generics in Go 1.18 made this construct legal,
+and the standard library uses it. It is the most abstraction-dense shape the
+type system allows. An ordinary interface plus a concrete type usually
+reaches the same shape, so some codebases choose to ban it. That is a
+house-style decision. That is why the rule is off by default.
 
 A constraint that refers to a sibling type parameter, such as
-type Graph[N any, E Edge[N]], is not reported: the parameter does not appear
+type Graph[N any, E Edge[N]], is not reported. The parameter does not appear
 in its own constraint.`,
 	Analyzer: newAnalyzer("no-f-bounded-constraints",
 		"reject a type parameter that appears in its own constraint",

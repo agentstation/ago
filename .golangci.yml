@@ -21,16 +21,16 @@ linters:
     - noctx
   settings:
     errcheck:
-      # Writes to stdout and stderr in a CLI: a failed write to a closed pipe
-      # is not something this program can meaningfully recover from, and
-      # checking each one would bury the code that matters.
+      # Writes to stdout and stderr in a CLI. A failed write to a closed pipe
+      # is not something this program can meaningfully recover from.
+      # Checking each one would bury the code that matters.
       exclude-functions:
         - fmt.Fprint
         - fmt.Fprintf
         - fmt.Fprintln
 
     goconst:
-      # A test spells a rule name out as a literal on purpose: asserting
+      # A test spells a rule name out as a literal on purpose. Asserting
       # against a constant that the code under test also uses would prove
       # nothing about the name. Without this, goconst counts those literals
       # and reports the total against the one real occurrence in the registry.

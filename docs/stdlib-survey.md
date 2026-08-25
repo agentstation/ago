@@ -1,14 +1,14 @@
 # Surveying the standard library
 
-Every count in the README is measured, not remembered. This document holds the
-method so the numbers can be reproduced and updated.
+Every count in the README comes from a measurement, not from memory. This
+document holds the method so you can reproduce and update the numbers.
 
 ## Population
 
 All `.go` files under `$(go env GOROOT)/src`, excluding any `testdata/`,
-`vendor/`, or `_asm/` directory. Most counts further exclude `_test.go` files,
-because a rule that fires only in tests is a different argument. State which
-population a number came from — mixing them is how the first version of this
+`vendor/`, or `_asm/` directory. Most counts further exclude `_test.go` files.
+A rule that fires only in tests is a different argument. State which
+population a number came from. Mixing them is how the first version of this
 README ended up quoting a figure that was 60% too high.
 
 As of `go1.26.5`: **5,594** files in total, **3,916** of them non-test.
@@ -41,14 +41,14 @@ PY
 ## Declaration-level counts
 
 Anything about declarations needs a parser. A regular expression cannot tell a
-generic *declaration* from a generic *instantiation*, which is the error that
-produced the "~430 files declare generics" figure in an early draft — the real
+generic *declaration* from a generic *instantiation*. That is the error that
+produced the "~430 files declare generics" figure in an early draft. The real
 number is 115.
 
 Use `go/ast`: walk each file, and count a `*ast.FuncDecl` or `*ast.TypeSpec`
 whose `TypeParams` is non-nil. For embedded fields, count `*ast.StructType`
 fields whose `Names` is empty. The full program used for the README figures is
-short enough to rewrite from that description; keep it out of the module so it
+short enough to rewrite from that description. Keep it out of the module so it
 does not become a dependency.
 
 ## Current figures
@@ -68,4 +68,4 @@ Measured against `go1.26.5`, non-test files only.
 `goto` concentrates in `syscall` (120), `runtime` (77), and the two type
 checkers (71). Dot imports outside tests are almost entirely `go/types` and
 `cmd/compile/internal/types2` importing `internal/types/errors` (26 files
-each); 224 `_test.go` files use them.
+each). 224 `_test.go` files use them.

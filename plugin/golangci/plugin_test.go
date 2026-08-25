@@ -82,7 +82,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-// The rules need type information; declaring syntax-only would give every
+// The rules need type information. Declaring syntax-only would give every
 // type-aware rule a nil TypesInfo.
 func TestLoadMode(t *testing.T) {
 	p, err := New(map[string]any{})
