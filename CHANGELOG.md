@@ -28,8 +28,8 @@ passed.
 - Make `-init` an optional customization command. It writes a minimal policy
   at the nearest `go.mod` or `go.work` root and refuses a competing child
   policy.
-- Lead the README, package docs, command help, and release notes with ago's
-  shared-dialect goal.
+- Lead the README, package docs, command help, and release notes with one
+  message. The message is one way to write Go, no matter who writes it.
 
 ### Fixed
 

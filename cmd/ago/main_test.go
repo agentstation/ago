@@ -24,7 +24,7 @@ func TestHelpWritesOneCompleteDocumentToStdout(t *testing.T) {
 	if got := strings.Count(help, "Usage:"); got != 1 {
 		t.Errorf("Usage count = %d, want 1\n%s", got, help)
 	}
-	for _, want := range []string{"-all", "-config", "Exit status:", "one Go dialect"} {
+	for _, want := range []string{"-all", "-config", "Exit status:", "one way to write Go"} {
 		if !strings.Contains(help, want) {
 			t.Errorf("help does not contain %q\n%s", want, help)
 		}

@@ -5,18 +5,22 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/agentstation/ago)](https://goreportcard.com/report/github.com/agentstation/ago)
 [![License](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue)](#license)
 
-**One Go dialect for the whole codebase.**
+**One way to write Go, no matter who writes it.**
 
-Go's productive kind of boring comes from familiarity. The original design put
-simplicity, readability, and one common form ahead of extra choice. Uniform Go
-code also helps teams read and maintain code across authors. See [Go design
-history](https://go.dev/talks/2015/gophercon-goevolution.slide) and [Go at
-Google](https://go.dev/talks/2012/splash.article).
+ago means *agent Go*: the Go that coding agents may write. The name also refers
+to an earlier, smaller Go.
 
-As Go gains more legal forms, ago lets a project select the forms it accepts.
-Developers and coding agents run the same policy, and CI enforces it. Where
-`gofmt` standardizes presentation, ago standardizes the accepted language
-subset.
+Go's original design called for [one way to write a piece of
+code](https://go.dev/talks/2015/gophercon-goevolution.slide). Rob Pike later
+made the same point:
+
+> Go code looks and works the same regardless of who's writing it.
+>
+> Rob Pike, [What We Got Right, What We Got
+> Wrong](https://commandcenter.blogspot.com/2024/01/what-we-got-right-what-we-got-wrong.html)
+
+`gofmt` gives Go one format. A project selects one way to write Go, and ago
+enforces it. Developers, coding agents, and CI use the same rules.
 
 `ago` rejects selected legal Go constructs. It does not add syntax, rewrite
 code, or change semantics. Code that passes `ago` is ordinary Go that builds
@@ -29,9 +33,7 @@ internal/store/index.go:88:9: new() takes a type, not an expression (no-new-expr
 2 violations
 ```
 
-The name reads as *a-go*, the Go subset that a project accepts. It also refers
-to an earlier, smaller Go language. Read the [design case](docs/design.md) for
-the project boundary and evidence.
+Read the [design case](docs/design.md) for the project boundary and evidence.
 
 ## Adopt ago in a Go repository
 

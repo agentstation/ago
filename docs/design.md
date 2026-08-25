@@ -1,19 +1,25 @@
 # Design and scope
 
-ago keeps one Go dialect across a codebase. It gives a project a mechanically
-enforced subset of legal Go.
+ago enforces one way to write Go across a codebase. A project selects the Go
+constructs that it accepts. ago enforces that choice.
 
 ## Motivation
 
-Go's original design treated simplicity, safety, and readability as primary
-goals. It also stated a minimal-language goal: one way to write a piece of
-code. See [Go design
-history](https://go.dev/talks/2015/gophercon-goevolution.slide).
+Go's original design put simplicity, safety, and readability first. It also
+called for [one way to write a piece of
+code](https://go.dev/talks/2015/gophercon-goevolution.slide).
 
-Go's productive kind of boring follows from that restraint. A developer can
-read unfamiliar code without first learning another author's dialect. The same
-principle supports `gofmt`: uniform code helps teams work across authors. See
-[Go at Google](https://go.dev/talks/2012/splash.article).
+Rob Pike later made the same point:
+
+> Go code looks and works the same regardless of who's writing it.
+>
+> Rob Pike, [What We Got Right, What We Got
+> Wrong](https://commandcenter.blogspot.com/2024/01/what-we-got-right-what-we-got-wrong.html)
+
+`gofmt` gives Go one format. A project selects one way to write Go, and ago
+enforces it. Developers and coding agents follow the same rules. CI checks
+them. [Go at Google](https://go.dev/talks/2012/splash.article) explains why
+uniform code helps teams work together.
 
 This need remains current. The [2024 Go Developer
 Survey](https://go.dev/blog/survey2024-h2-results) found that consistent coding
@@ -21,13 +27,12 @@ standards were the most common high-value team problem. The [2025
 survey](https://go.dev/blog/survey2025) also found broad AI coding-tool use and
 continued concerns about generated-code quality.
 
-Recent releases widened the language. Go 1.26 let a generic type refer to
-itself in its type parameter list. It also let `new` accept an expression
-instead of a type. Go 1.27 let methods declare type parameters. Each construct
-has another legal expression.
+Recent releases added more ways to write Go. Go 1.26 let a generic type refer
+to itself in its type parameter list. It also let `new` accept an expression
+instead of a type. Go 1.27 let methods declare type parameters.
 
-ago does not claim that these features are bad. Each project selects the forms
-that fit its codebase. The linter applies that choice before review.
+ago does not claim that these features are bad. Each project selects one way to
+write Go. The linter enforces that choice before review.
 
 Each ago rule removes an alternative. No rule adds syntax, rewrites code, or
 changes semantics.
