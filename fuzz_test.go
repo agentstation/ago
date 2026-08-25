@@ -71,7 +71,7 @@ func FuzzSkip(f *testing.F) {
 	f.Add("*.pb.go", "api/service.pb.go")
 	f.Add("third_party/*", "third_party/lib/a.go")
 	f.Add("*", "anything.go")
-	f.Fuzz(func(t *testing.T, pattern, path string) {
+	f.Fuzz(func(_ *testing.T, pattern, path string) {
 		cfg := &Config{Exclude: []string{pattern}}
 		_ = cfg.Skip(path)
 	})

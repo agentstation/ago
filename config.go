@@ -96,8 +96,10 @@ func readConfigBytes(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
 	b, err := io.ReadAll(io.LimitReader(f, maxConfigBytes+1))
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
 	if err != nil {
 		return nil, err
 	}
