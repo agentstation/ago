@@ -13,27 +13,27 @@ var RuleNoRedundantShortDecl = register(Rule{
 	Severity: Error,
 	Rationale: `One way to introduce a variable instead of several.
 
-The rule does not ban := outright, because := is load-bearing where var is a
-syntax error:
+The rule does not report := where var is a syntax error:
 
 	switch t := x.(type) { ... }   // var is not allowed in a switch guard
 	for i, v := range xs { ... }   // no var form exists
+	select { case v := <-ch: ... } // var is not allowed in a receive clause
 
 It reports := only in plain statement position, where var is a drop-in
-replacement. Hoisting an if or for header declaration out to a preceding var
-is legal but widens the variable's scope. The rule treats those as
-load-bearing too. A blanket ban would force adding syntax to the language.
-The tool will not do that.`,
+replacement. Moving an if, for, or switch header declaration to a preceding var
+is legal but widens the variable's scope. The rule does not report those
+declarations. A blanket ban would force adding syntax to the language. The tool
+will not do that.`,
 	Analyzer: newAnalyzer("no-redundant-short-decl",
 		"reject := in plain statement position, where var is a drop-in replacement",
 		checkRedundantShortDecl),
 })
 
 func checkRedundantShortDecl(c *checkPass) {
-	loadBearing := map[ast.Node]bool{}
+	required := map[ast.Node]bool{}
 	mark := func(s ast.Stmt) {
 		if a, ok := s.(*ast.AssignStmt); ok {
-			loadBearing[a] = true
+			required[a] = true
 		}
 	}
 	c.forEachNode(func(n ast.Node) bool {
@@ -54,7 +54,7 @@ func checkRedundantShortDecl(c *checkPass) {
 	})
 	c.forEachNode(func(n ast.Node) bool {
 		a, ok := n.(*ast.AssignStmt)
-		if !ok || a.Tok != token.DEFINE || loadBearing[a] {
+		if !ok || a.Tok != token.DEFINE || required[a] {
 			return true
 		}
 		c.reportf(a, "short declaration in plain statement position; use var")

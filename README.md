@@ -7,6 +7,10 @@
 
 A restriction-only linter for Go.
 
+Go permits several forms for some operations. ago lets a project select
+accepted forms and gives developers, coding agents, and CI the same executable
+policy.
+
 `ago` rejects selected legal Go constructs. It does not add syntax, rewrite
 code, or change semantics. Code that passes `ago` is ordinary Go that builds
 with the stock toolchain.
@@ -222,9 +226,9 @@ go tool ago -stale-ignores -format json ./...
 }
 ```
 
-ago sorts and deduplicates findings. The JSON output is byte-identical for the
-same version, policy, and source tree. Existing JSON fields keep their names
-and meanings. Later versions can add fields.
+ago sorts and deduplicates findings. The same version, policy, and source tree
+produce identical JSON bytes. Existing JSON fields keep their names and
+meanings. Later versions can add fields.
 
 A package load or parse failure appears in `errors`. ago continues with each
 package that it can analyze. Exit status 2 means that no usable result was
@@ -259,7 +263,7 @@ Six rules are off by default because they encode a project-specific choice.
 | [`no-invalid-ignore`](docs/rules.md#no-invalid-ignore) | on | Each suppression must name known rules and give a reason. |
 | [`no-f-bounded-constraints`](docs/rules.md#no-f-bounded-constraints) | off | A type parameter cannot appear inside its own constraint. |
 | [`no-generic-decls`](docs/rules.md#no-generic-decls) | off | Functions and types cannot declare type parameters. |
-| [`no-redundant-short-decl`](docs/rules.md#no-redundant-short-decl) | off | Use `var` where `:=` is not load-bearing. |
+| [`no-redundant-short-decl`](docs/rules.md#no-redundant-short-decl) | off | Use `var` for a short declaration in plain statement position. |
 | [`no-embedded-field`](docs/rules.md#no-embedded-field) | off | Struct fields must have names. |
 | [`no-init-func`](docs/rules.md#no-init-func) | off | Packages cannot declare `func init()`. |
 | [`no-blank-import-outside-main`](docs/rules.md#no-blank-import-outside-main) | off | Only package `main` can use a blank import. |
