@@ -12,6 +12,8 @@ passed.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-25
+
 ### Security
 
 - Require `golang.org/x/mod` v0.40.0, which fixes GO-2026-6179 and
@@ -88,5 +90,6 @@ Relative to the unreleased single-file prototype:
   unreported. It now uses `types.Info`.
 - Passing the same package twice produced duplicate findings.
 
-[Unreleased]: https://github.com/agentstation/ago/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/agentstation/ago/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/agentstation/ago/releases/tag/v0.1.1
 [0.1.0]: https://github.com/agentstation/ago/releases/tag/v0.1.0
