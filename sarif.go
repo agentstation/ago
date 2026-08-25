@@ -3,6 +3,7 @@ package ago
 import (
 	"encoding/json"
 	"io"
+	"strings"
 )
 
 // SARIF 2.1.0 is the interchange format GitHub code scanning ingests. This
@@ -116,13 +117,8 @@ func (r *Report) writeSARIF(w io.Writer) error {
 			Message: sarifText{Text: f.Message},
 			Locations: []sarifLocation{{
 				PhysicalLocation: sarifPhysical{
-					ArtifactLocation: sarifArtifact{URI: f.File},
-					Region: sarifRegion{
-						StartLine:   f.Line,
-						StartColumn: f.Column,
-						EndLine:     f.EndLine,
-						EndColumn:   f.EndColumn,
-					},
+					ArtifactLocation: sarifArtifact{URI: artifactURI(f.File)},
+					Region:           sarifRegionFor(f),
 				},
 			}},
 		})
@@ -144,4 +140,50 @@ func (r *Report) writeSARIF(w io.Writer) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 	return enc.Encode(doc)
+}
+
+// artifactURI turns a finding path into a SARIF artifact URI. It drops
+// control characters and maps backslash to slash.
+func artifactURI(path string) string {
+	path = strings.ToValidUTF8(path, "")
+	var b strings.Builder
+	b.Grow(len(path))
+	for _, r := range path {
+		if r < 0x20 || r == 0x7f {
+			continue
+		}
+		if r == '\\' {
+			b.WriteByte('/')
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
+}
+
+// sarifRegionFor maps a finding onto a SARIF region. GitHub code scanning
+// rejects a startLine below 1. A missing position uses line 1.
+func sarifRegionFor(f Finding) sarifRegion {
+	line := f.Line
+	if line < 1 {
+		line = 1
+	}
+	col := f.Column
+	if col < 1 {
+		col = 1
+	}
+	endLine := f.EndLine
+	if endLine < line {
+		endLine = line
+	}
+	endCol := f.EndColumn
+	if endLine == line && endCol < col {
+		endCol = col
+	}
+	return sarifRegion{
+		StartLine:   line,
+		StartColumn: col,
+		EndLine:     endLine,
+		EndColumn:   endCol,
+	}
 }

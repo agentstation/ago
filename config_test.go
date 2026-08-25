@@ -80,6 +80,11 @@ func TestLoadConfig(t *testing.T) {
 			body:    "disable: [all]\n",
 			wantErr: `"all" is not a rule name`,
 		},
+		{
+			name:    "empty exclude pattern is rejected",
+			body:    "exclude: ['']\n",
+			wantErr: "empty pattern",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -186,6 +191,36 @@ func TestExampleConfigIsValid(t *testing.T) {
 	}
 	if got := ruleNames(cfg.Enabled(nil)); !slices.Equal(got, DefaultNames()) {
 		t.Errorf("enabled = %v, want the default set %v", got, DefaultNames())
+	}
+}
+
+func TestLoadConfigRejectsOversizedFile(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, ConfigName)
+	body := strings.Repeat("#", maxConfigBytes+1)
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	_, err := LoadConfig(dir, path)
+	if err == nil || !strings.Contains(err.Error(), "exceeds") {
+		t.Fatalf("error = %v, want one containing %q", err, "exceeds")
+	}
+}
+
+func TestValidateExcludeLimits(t *testing.T) {
+	tooMany := make([]string, maxExcludePatterns+1)
+	for i := range tooMany {
+		tooMany[i] = "x"
+	}
+	if err := (&Config{Exclude: tooMany}).Validate(); err == nil {
+		t.Fatal("expected error for too many exclude patterns")
+	}
+	long := strings.Repeat("a", maxExcludePatternLen+1)
+	if err := (&Config{Exclude: []string{long}}).Validate(); err == nil {
+		t.Fatal("expected error for an overlong exclude pattern")
+	}
+	if err := (&Config{Exclude: []string{"ok"}}).Validate(); err != nil {
+		t.Fatalf("valid exclude: %v", err)
 	}
 }
 

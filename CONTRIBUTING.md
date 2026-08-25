@@ -9,8 +9,10 @@ changes. New rules have a higher bar than ordinary code.
 make build      # build ./cmd/ago
 make test       # go test -race ./...
 make lint       # gofmt, go vet, golangci-lint
+make govulncheck  # scan the module graph
+make fuzz       # run native Go fuzz tests
 make prose      # technical-writing linter, strict mode
-make check      # everything CI runs
+make check      # fmt-check, vet, test, dogfood
 ```
 
 You need Go 1.25 or later. One rule, `no-generic-methods`, only has anything to

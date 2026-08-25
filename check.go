@@ -67,8 +67,12 @@ func Check(opts Options) (*Report, error) {
 	}
 	report.Errors = append(report.Errors, loadErrors(pkgs)...)
 
+	loaded := pkgs
 	pkgs = keepAnalyzable(pkgs, opts.Config)
 	if len(pkgs) == 0 {
+		if excludedAll(loaded, opts.Config) {
+			report.Errors = append(report.Errors, "all packages excluded by config")
+		}
 		return report, nil
 	}
 
@@ -191,6 +195,26 @@ func keepAnalyzable(pkgs []*packages.Package, cfg *Config) []*packages.Package {
 		out = append(out, p)
 	}
 	return out
+}
+
+// excludedAll reports whether Config.Skip dropped every package that had
+// syntax to analyze. A config that excludes the whole tree would otherwise
+// exit 0 with an empty report.
+func excludedAll(pkgs []*packages.Package, cfg *Config) bool {
+	if cfg == nil {
+		return false
+	}
+	saw := false
+	for _, p := range pkgs {
+		if len(p.Syntax) == 0 {
+			continue
+		}
+		saw = true
+		if len(p.CompiledGoFiles) == 0 || !cfg.Skip(p.CompiledGoFiles[0]) {
+			return false
+		}
+	}
+	return saw
 }
 
 // loadErrors flattens package load and type errors into readable strings,

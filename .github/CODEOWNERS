@@ -1,7 +1,3 @@
-* @agentstation/maintainers
-
-# Rule behavior is the public interface. Changes here need a rule owner.
-/rule*.go       @agentstation/maintainers
-/testdata/      @agentstation/maintainers
-/.github/       @agentstation/maintainers
-/.goreleaser.yaml @agentstation/maintainers
+# The founders team is secret, so GitHub cannot resolve it here. Name the
+# people who can review instead.
+* @jackspirou @savkat

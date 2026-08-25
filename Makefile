@@ -10,7 +10,9 @@ LDFLAGS  = -ldflags "-s -w -X github.com/agentstation/ago.Version=$(VERSION)"
 
 GOLANGCI_LINT_VERSION = v2.12.2
 GORELEASER_VERSION    = 2.17.1
+GOVULNCHECK_VERSION   = v1.7.0
 TECHNICAL_WRITING    ?= $(HOME)/.agents/skills/technical-writing/scripts/technical-writing
+FUZZTIME             ?= 15s
 
 # testdata holds intentionally unparseable Go. Point every tool that walks
 # the tree at real source instead.
@@ -102,6 +104,22 @@ tidy: ## Tidy and verify go.mod
 	$(GO) mod tidy
 	$(GO) mod verify
 
+##@ Security
+
+.PHONY: govulncheck
+govulncheck: ## Scan the module graph with govulncheck
+	@if ! command -v govulncheck >/dev/null 2>&1; then \
+		echo "govulncheck not installed; run: make tools"; exit 1; \
+	fi
+	govulncheck ./...
+
+.PHONY: fuzz
+fuzz: ## Run native Go fuzz tests for FUZZTIME
+	$(GO) test -fuzz=FuzzLoadConfig -fuzztime=$(FUZZTIME) .
+	$(GO) test -fuzz=FuzzGitHubReport -fuzztime=$(FUZZTIME) .
+	$(GO) test -fuzz=FuzzSkip -fuzztime=$(FUZZTIME) .
+	$(GO) test -fuzz=FuzzParseDirective -fuzztime=$(FUZZTIME) .
+
 ##@ Dogfood
 
 .PHONY: ago
@@ -129,3 +147,4 @@ release-check: ## Validate the goreleaser configuration
 tools: ## Install development tools
 	$(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 	$(GO) install github.com/goreleaser/goreleaser/v2@v$(GORELEASER_VERSION)
+	$(GO) install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)

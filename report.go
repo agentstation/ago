@@ -121,16 +121,20 @@ func (r *Report) writeGitHub(w io.Writer) error {
 			level = "warning"
 		}
 		if _, err := fmt.Fprintf(w,
-			"::%s file=%s,line=%d,col=%d,endLine=%d,endColumn=%d,title=ago %s::%s\n",
-			level, f.File, f.Line, f.Column, f.EndLine, f.EndColumn, f.Rule,
+			"::%s file=%s,line=%d,col=%d,endLine=%d,endColumn=%d,title=%s::%s\n",
+			level,
+			escapeWorkflowParam(f.File),
+			f.Line, f.Column, f.EndLine, f.EndColumn,
+			escapeWorkflowParam("ago "+f.Rule),
 			escapeWorkflowData(f.Message)); err != nil {
 			return err
 		}
 	}
 	for _, s := range r.StaleIgnores {
 		if _, err := fmt.Fprintf(w,
-			"::warning file=%s,line=%d,col=%d,title=ago stale ignore::%s\n",
-			s.File, s.Line, s.Column,
+			"::warning file=%s,line=%d,col=%d,title=%s::%s\n",
+			escapeWorkflowParam(s.File), s.Line, s.Column,
+			escapeWorkflowParam("ago stale ignore"),
 			escapeWorkflowData("//ago:ignore suppressed nothing: "+strings.Join(s.Rules, ","))); err != nil {
 			return err
 		}
@@ -138,10 +142,10 @@ func (r *Report) writeGitHub(w io.Writer) error {
 	return nil
 }
 
-// escapeWorkflowData escapes the characters that terminate a GitHub Actions
-// workflow command, so a message containing them cannot truncate or forge an
-// annotation.
-func escapeWorkflowData(s string) string {
+// escapeWorkflowParam encodes a GitHub Actions workflow-command property.
+// An unescaped ",", ":", CR, LF, or "%" in file= or title= splits the
+// command and forges a second annotation.
+func escapeWorkflowParam(s string) string {
 	return strings.NewReplacer(
 		"%", "%25",
 		"\r", "%0D",
@@ -149,4 +153,9 @@ func escapeWorkflowData(s string) string {
 		":", "%3A",
 		",", "%2C",
 	).Replace(s)
+}
+
+// escapeWorkflowData encodes the message body after the second "::".
+func escapeWorkflowData(s string) string {
+	return escapeWorkflowParam(s)
 }
