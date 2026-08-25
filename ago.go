@@ -1,7 +1,7 @@
-// Package ago keeps one Go dialect across a codebase.
+// Package ago enforces one way to write Go across a codebase.
 //
-// A project selects the legal Go forms that it accepts. Developers and coding
-// agents run the same rule policy, and CI enforces it.
+// A project selects the Go constructs that it accepts. Developers and coding
+// agents use the same rule policy, and CI enforces it.
 //
 // ago only ever rejects language constructs. It never adds syntax, never
 // rewrites code, and never changes semantics. Code that passes ago is
