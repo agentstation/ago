@@ -69,12 +69,12 @@ homebrew_casks:
     description: Linter that enforces one way to write Go
     binaries:
       - ago
-    hooks:
-      post:
-        install: |
-          if OS.mac? && system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/ago"], sudo: false
-          end
+    custom_block: |
+      postflight_steps do
+        on_macos do
+          run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ "{{staged_path}}" }}/ago"], sudo: false
+        end
+      end
 
 checksum:
   name_template: checksums.txt

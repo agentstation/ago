@@ -79,7 +79,8 @@ go install github.com/agentstation/ago/cmd/ago@latest
 On macOS or Linux with Homebrew:
 
 ```sh
-brew install agentstation/tap/ago
+brew trust --cask agentstation/tap/ago
+brew install --cask agentstation/tap/ago
 ```
 
 Release archives, checksums, and software bills of materials are available on
