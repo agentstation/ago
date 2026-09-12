@@ -52,12 +52,18 @@ Enable the custom linter as `goago`, then rebuild the custom binary.
 
 ## Homebrew and agent skills
 
-The Homebrew cask is now `agentstation/tap/goago`. Update the tap, then run:
+The Homebrew cask is now `agentstation/tap/goago`. For an existing `ago`
+installation, run:
 
 ```sh
+brew update
 brew trust --cask agentstation/tap/goago
-brew install --cask agentstation/tap/goago
+brew migrate --cask ago
+brew upgrade --cask agentstation/tap/goago
 ```
+
+`brew migrate` changes the installed package name. `brew upgrade` installs the
+new `goago` executable and removes the old `ago` executable link.
 
 The Agent Skill is now `goago` in `agentstation/skills`. Replace an installed
 `ago` skill with the `goago` skill. The modern Go skill uses the new command.
