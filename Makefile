@@ -1,12 +1,12 @@
-# ago Makefile
+# goago Makefile
 MAKEFLAGS += --no-print-directory
 
-BINARY_NAME = ago
-MAIN_PATH   = ./cmd/ago
+BINARY_NAME = goago
+MAIN_PATH   = ./cmd/goago
 GO          = go
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "v0.0.0-dev")
-LDFLAGS  = -ldflags "-s -w -X github.com/agentstation/ago.Version=$(VERSION)"
+LDFLAGS  = -ldflags "-s -w -X github.com/agentstation/goago.Version=$(VERSION)"
 
 GOLANGCI_LINT_VERSION = v2.12.2
 GORELEASER_VERSION    = 2.17.1
@@ -33,16 +33,16 @@ help: ## Display this help message
 ##@ Build
 
 .PHONY: build
-build: ## Build the ago binary
+build: ## Build the goago binary
 	$(GO) build $(LDFLAGS) -o $(BINARY_NAME) $(MAIN_PATH)
 
 .PHONY: install
-install: ## Install ago into GOBIN
+install: ## Install goago into GOBIN
 	$(GO) install $(LDFLAGS) $(MAIN_PATH)
 
 .PHONY: clean
 clean: ## Remove build and test output
-	@rm -f $(BINARY_NAME) coverage.txt ago.sarif
+	@rm -f $(BINARY_NAME) coverage.txt goago.sarif
 	@rm -rf dist/
 	$(GO) clean -testcache
 
@@ -122,12 +122,12 @@ fuzz: ## Run native Go fuzz tests for FUZZTIME
 
 ##@ Dogfood
 
-.PHONY: ago
-ago: build ## Run ago against its own source
+.PHONY: goago
+goago: build ## Run goago against its own source
 	./$(BINARY_NAME) ./...
 
 .PHONY: check
-check: fmt-check vet test ago ## Run everything CI runs
+check: fmt-check vet test goago ## Run everything CI runs
 
 ##@ Release
 

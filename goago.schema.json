@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/agentstation/ago/main/ago.schema.json",
-  "title": "ago rule policy",
-  "description": "Configuration for the ago restriction-only Go linter.",
+  "$id": "https://raw.githubusercontent.com/agentstation/goago/main/goago.schema.json",
+  "title": "goago rule policy",
+  "description": "Configuration for the goago restriction-only Go linter.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -38,7 +38,7 @@
       }
     },
     "disable": {
-      "description": "Rules to disable after ago resolves enable.",
+      "description": "Rules to disable after goago resolves enable.",
       "type": "array",
       "uniqueItems": true,
       "maxItems": 4096,

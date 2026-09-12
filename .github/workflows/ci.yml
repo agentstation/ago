@@ -92,7 +92,7 @@ jobs:
       - name: Rule reports a generic method
         run: |
           set -euo pipefail
-          go build -o "$RUNNER_TEMP/ago" ./cmd/ago
+          go build -o "$RUNNER_TEMP/goago" ./cmd/goago
           mkdir -p "$RUNNER_TEMP/gm"
           cd "$RUNNER_TEMP/gm"
           printf 'module gm\n\ngo 1.27\n' > go.mod
@@ -106,7 +106,7 @@ jobs:
           func Plain[R any](b Box, f func(any) R) R { return f(b.v) }
           GO
           set +e
-          out=$("$RUNNER_TEMP/ago" -no-config -rules no-generic-methods ./...)
+          out=$("$RUNNER_TEMP/goago" -no-config -rules no-generic-methods ./...)
           status=$?
           set -e
           echo "$out"
@@ -128,13 +128,13 @@ jobs:
         with:
           go-version: stable
 
-      - name: Run ago against its own source
+      - name: Run goago against its own source
         run: |
-          go build -o ago ./cmd/ago
-          ./ago -format github ./...
+          go build -o goago ./cmd/goago
+          ./goago -format github ./...
 
       - name: Report stale suppressions
-        run: ./ago -stale-ignores ./...
+        run: ./goago -stale-ignores ./...
 
   build:
     name: Cross-compile
@@ -154,7 +154,7 @@ jobs:
           for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
             echo "building $target"
             GOOS=${target%/*} GOARCH=${target#*/} CGO_ENABLED=0 \
-              go build -o /dev/null ./cmd/ago
+              go build -o /dev/null ./cmd/goago
           done
 
   govulncheck:

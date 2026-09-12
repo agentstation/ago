@@ -6,9 +6,9 @@ before:
     - go mod tidy -diff
 
 builds:
-  - id: ago
-    binary: ago
-    main: ./cmd/ago
+  - id: goago
+    binary: goago
+    main: ./cmd/goago
     env:
       - CGO_ENABLED=0
     mod_timestamp: "{{ .CommitTimestamp }}"
@@ -16,7 +16,7 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X github.com/agentstation/ago.Version={{ .Version }}
+      - -X github.com/agentstation/goago.Version={{ .Version }}
     goos:
       - linux
       - darwin
@@ -26,9 +26,9 @@ builds:
       - arm64
 
 archives:
-  - id: ago
+  - id: goago
     ids:
-      - ago
+      - goago
     formats: [tar.gz]
     format_overrides:
       - goos: windows
@@ -42,15 +42,15 @@ archives:
     files:
       - README.md
       - CHANGELOG.md
-      - ago.schema.json
+      - goago.schema.json
       - COPYRIGHT
       - LICENSE-MIT
       - LICENSE-APACHE
 
 homebrew_casks:
-  - name: ago
+  - name: goago
     ids:
-      - ago
+      - goago
     repository:
       owner: agentstation
       name: homebrew-tap
@@ -64,16 +64,16 @@ homebrew_casks:
     commit_author:
       name: "GitHub Actions"
       email: "actions@github.com"
-    commit_msg_template: "Update ago to {{ .Tag }}"
-    homepage: https://github.com/agentstation/ago
+    commit_msg_template: "Update goago to {{ .Tag }}"
+    homepage: https://github.com/agentstation/goago
     description: Linter that enforces one way to write Go
     binaries:
-      - ago
+      - goago
     hooks:
       post:
         install: |
           if OS.mac? && system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/ago"], sudo: false
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/goago"], sudo: false
           end
 
 checksum:
@@ -125,15 +125,15 @@ changelog:
 release:
   github:
     owner: agentstation
-    name: ago
-  name_template: "ago {{ .Tag }}"
+    name: goago
+  name_template: "goago {{ .Tag }}"
   header: |
-    `ago` enforces one way to write Go across a codebase. Developers, coding
+    `goago` enforces one way to write Go across a codebase. Developers, coding
     agents, and CI use the same configurable Go subset.
 
     ```sh
-    go get -tool github.com/agentstation/ago/cmd/ago@latest
-    go tool ago ./...
+    go get -tool github.com/agentstation/goago/cmd/goago@latest
+    go tool goago ./...
     ```
 
     A config file is optional. The pinned version supplies the default policy.
@@ -144,6 +144,6 @@ release:
     Verify downloaded archives against `checksums.txt`. Each archive ships an
     SBOM alongside it.
   footer: |
-    **Full changelog:** https://github.com/agentstation/ago/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full changelog:** https://github.com/agentstation/goago/compare/{{ .PreviousTag }}...{{ .Tag }}
   prerelease: auto
   make_latest: '{{ if .Prerelease }}false{{ else }}true{{ end }}'

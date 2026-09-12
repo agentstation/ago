@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 
 // Options control one [Check] run.
 type Options struct {
-	// Dir is the directory ago resolves patterns against. An empty Dir means
+	// Dir is the directory goago resolves patterns against. An empty Dir means
 	// the process working directory.
 	Dir string
 	// Patterns are go/packages patterns such as "./..." or a list of .go
@@ -21,11 +21,11 @@ type Options struct {
 	Patterns []string
 	// Rules are the rules to run. An empty Rules means the default set.
 	Rules []Rule
-	// Tests reports whether ago analyzes _test.go files.
+	// Tests reports whether goago analyzes _test.go files.
 	Tests bool
 	// Config supplies exclude patterns. It may be nil.
 	Config *Config
-	// ReportStaleIgnores reports //ago:ignore directives that suppressed
+	// ReportStaleIgnores reports //goago:ignore directives that suppressed
 	// nothing.
 	ReportStaleIgnores bool
 }
@@ -129,7 +129,7 @@ func Check(opts Options) (*Report, error) {
 	return report, nil
 }
 
-// toFinding converts an analysis diagnostic into ago's flat finding form,
+// toFinding converts an analysis diagnostic into goago's flat finding form,
 // making the path relative to the run directory so that output is stable
 // across machines.
 func toFinding(pkg *packages.Package, rule Rule, d analysis.Diagnostic, dir string) Finding {
@@ -151,7 +151,7 @@ func toFinding(pkg *packages.Package, rule Rule, d analysis.Diagnostic, dir stri
 	}
 }
 
-// collectStaleIgnores finds every //ago:ignore directive that suppressed
+// collectStaleIgnores finds every //goago:ignore directive that suppressed
 // nothing during the run.
 func collectStaleIgnores(graph *checker.Graph, dir string) []StaleIgnore {
 	out := []StaleIgnore{}

@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"bytes"
@@ -13,13 +13,13 @@ import (
 	yaml "go.yaml.in/yaml/v3"
 )
 
-// ConfigName is the file ago looks for when the command line names no
+// ConfigName is the file goago looks for when the command line names no
 // configuration. ConfigNameAlt is an equivalent spelling.
 const (
-	ConfigName    = ".ago.yml"
-	ConfigNameAlt = ".ago.yaml"
+	ConfigName    = ".goago.yml"
+	ConfigNameAlt = ".goago.yaml"
 
-	// maxConfigBytes is the largest config file ago will load. A larger file
+	// maxConfigBytes is the largest config file goago will load. A larger file
 	// is an attack or a mistake, not a rule policy.
 	maxConfigBytes = 1 << 20
 	// maxExcludePatterns caps Config.Exclude.
@@ -35,25 +35,25 @@ const (
 // same subset without extra instruction.
 type Config struct {
 	// Version names the config schema. Zero accepts an unversioned config from
-	// ago v0.1. Version 1 is the current schema.
+	// goago v0.1. Version 1 is the current schema.
 	Version int `yaml:"version"`
 	// Enable lists rules to turn on. The special value "default" expands to
 	// the default rule set and "all" expands to every rule. An empty list
 	// means the default set.
 	Enable []string `yaml:"enable"`
-	// Disable lists rules to turn off after ago applies Enable.
+	// Disable lists rules to turn off after goago applies Enable.
 	Disable []string `yaml:"disable"`
-	// Tests reports whether ago checks _test.go files.
+	// Tests reports whether goago checks _test.go files.
 	Tests bool `yaml:"tests"`
-	// Exclude lists path patterns. ago matches them with [path/filepath.Match]
+	// Exclude lists path patterns. goago matches them with [path/filepath.Match]
 	// against each path element and skips those packages.
 	Exclude []string `yaml:"exclude"`
 
-	// path records where ago loaded the config, for error messages.
+	// path records where goago loaded the config, for error messages.
 	path string
 }
 
-// Path returns the file ago loaded the config from, or "" for a default
+// Path returns the file goago loaded the config from, or "" for a default
 // config.
 func (c *Config) Path() string { return c.path }
 
@@ -64,7 +64,7 @@ const (
 )
 
 // LoadConfig reads a config file. A path of "" searches dir and each parent
-// directory for .ago.yml, stopping at the filesystem root. When the search
+// directory for .goago.yml, stopping at the filesystem root. When the search
 // finds no file it returns the default config and a nil error.
 func LoadConfig(dir, path string) (*Config, error) {
 	if path == "" {
@@ -230,7 +230,7 @@ func (c *Config) Enabled(overrides []string) []Rule {
 
 // Skip reports whether a file path matches any exclude pattern.
 //
-// ago matches a pattern three ways, because each way catches a different
+// goago matches a pattern three ways, because each way catches a different
 // surprise. It matches the whole slash-separated path, so "*.pb.go" works.
 // It matches each path element, so "generated" excludes any directory with
 // that name at any depth. It matches each leading path prefix, so
@@ -256,13 +256,13 @@ func (c *Config) Skip(path string) bool {
 	return false
 }
 
-// ExampleConfig returns the minimal policy that "ago -init" writes. The
-// "default" meta-name follows the defaults in the pinned ago version.
+// ExampleConfig returns the minimal policy that "goago -init" writes. The
+// "default" meta-name follows the defaults in the pinned goago version.
 func ExampleConfig() string {
-	return `# yaml-language-server: $schema=https://raw.githubusercontent.com/agentstation/ago/main/ago.schema.json
-# ago uses its built-in defaults when this file is absent.
-# "default" follows the defaults in the ago version pinned by go.mod.
-# Run "go tool ago -list" to inspect the resolved policy.
+	return `# yaml-language-server: $schema=https://raw.githubusercontent.com/agentstation/goago/main/goago.schema.json
+# goago uses its built-in defaults when this file is absent.
+# "default" follows the defaults in the goago version pinned by go.mod.
+# Run "go tool goago -list" to inspect the resolved policy.
 
 version: 1
 enable:
@@ -272,7 +272,7 @@ disable: []
 # Check _test.go files as well as production files.
 tests: false
 
-# Path patterns to skip. ago always skips vendor and testdata.
+# Path patterns to skip. goago always skips vendor and testdata.
 exclude: []
 `
 }

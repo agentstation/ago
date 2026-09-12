@@ -91,7 +91,7 @@ kind of code.
 
 ### `no-invalid-ignore`
 
-Every `//ago:ignore` directive must name a known rule and give a reason. A
+Every `//goago:ignore` directive must name a known rule and give a reason. A
 directive that does not parse, names no rule, names an unknown rule, or omits
 its reason suppresses nothing. This rule reports that directive.
 
@@ -156,7 +156,7 @@ fields. Enable this rule only for a project that rejects that convention.
 
 `init` runs before `main` in an order that the import graph determines. This
 makes an initialization failure hard to localize and test. Avoiding `init`
-requires an explicit wiring convention that ago cannot provide.
+requires an explicit wiring convention that goago cannot provide.
 
 ### `no-blank-import-outside-main`
 

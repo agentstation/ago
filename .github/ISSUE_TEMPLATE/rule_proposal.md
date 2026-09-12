@@ -6,7 +6,7 @@ labels: rule proposal
 assignees: ''
 ---
 
-<!-- ago is restriction-only. A rule must forbid legal Go, and working around
+<!-- goago is restriction-only. A rule must forbid legal Go, and working around
      it must never require adding syntax. See CONTRIBUTING.md. -->
 
 **The construct**

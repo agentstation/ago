@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"fmt"
@@ -13,15 +13,15 @@ import (
 
 // Directive prefixes recognised in comments.
 const (
-	ignoreLinePrefix = "//ago:ignore"
-	ignoreFilePrefix = "//ago:ignore-file"
+	ignoreLinePrefix = "//goago:ignore"
+	ignoreFilePrefix = "//goago:ignore-file"
 	// reasonSep separates the rule list from the mandatory reason.
 	reasonSep = "--"
 	// wildcard suppresses every rule.
 	wildcard = "*"
 )
 
-// An ignoreDirective is one parsed //ago:ignore or //ago:ignore-file comment.
+// An ignoreDirective is one parsed //goago:ignore or //goago:ignore-file comment.
 type ignoreDirective struct {
 	// Pos locates the comment itself.
 	Pos token.Pos
@@ -90,12 +90,12 @@ func (ix *ignoreIndex) suppressed(fset *token.FileSet, pos token.Pos, rule strin
 	return false
 }
 
-// ignoresAnalyzer collects //ago:ignore directives. Every rule analyzer
+// ignoresAnalyzer collects //goago:ignore directives. Every rule analyzer
 // requires it so that a rule never has to parse comments itself.
 var ignoresAnalyzer = &analysis.Analyzer{
-	Name:       "agoignores",
-	Doc:        "collect //ago:ignore directives for the other ago analyzers",
-	URL:        "https://github.com/agentstation/ago#fix-or-suppress-a-finding",
+	Name:       "goagoignores",
+	Doc:        "collect //goago:ignore directives for the other goago analyzers",
+	URL:        "https://github.com/agentstation/goago#fix-or-suppress-a-finding",
 	Run:        runIgnores,
 	ResultType: reflectTypeOfIgnoreIndex,
 }
@@ -131,7 +131,7 @@ func runIgnores(pass *analysis.Pass) (any, error) {
 }
 
 // parseDirective turns a comment into a directive, or returns nil when the
-// comment is not an ago directive at all. A malformed directive comes back
+// comment is not an goago directive at all. A malformed directive comes back
 // with Problem set so that no-invalid-ignore can report it.
 func parseDirective(fset *token.FileSet, c *ast.Comment, src []byte) *ignoreDirective {
 	text := strings.TrimRight(c.Text, " \t")
@@ -144,7 +144,7 @@ func parseDirective(fset *token.FileSet, c *ast.Comment, src []byte) *ignoreDire
 		prefix = ignoreFilePrefix
 	}
 	rest := text[len(prefix):]
-	// Require a separator so that "//ago:ignorecase" in prose is not a
+	// Require a separator so that "//goago:ignorecase" in prose is not a
 	// directive.
 	if rest != "" && !strings.HasPrefix(rest, " ") && !strings.HasPrefix(rest, "\t") {
 		return nil
@@ -177,7 +177,7 @@ func directiveProblem(prefix string, names []string, hasReason bool) string {
 			continue
 		}
 		if _, ok := Lookup(name); !ok {
-			return fmt.Sprintf("names unknown rule %q; run \"ago -list\" for the rule set", name)
+			return fmt.Sprintf("names unknown rule %q; run \"goago -list\" for the rule set", name)
 		}
 	}
 	if !hasReason {

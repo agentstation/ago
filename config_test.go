@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"encoding/json"
@@ -191,7 +191,7 @@ func TestConfigSkip(t *testing.T) {
 	}
 }
 
-// TestExampleConfigIsValid keeps "ago -init" honest: the file it writes must
+// TestExampleConfigIsValid keeps "goago -init" honest: the file it writes must
 // load without error and select exactly the default rule set.
 func TestExampleConfigIsValid(t *testing.T) {
 	dir := t.TempDir()
@@ -212,7 +212,7 @@ func TestExampleConfigIsValid(t *testing.T) {
 }
 
 func TestConfigSchemaRuleNames(t *testing.T) {
-	b, err := os.ReadFile("ago.schema.json")
+	b, err := os.ReadFile("goago.schema.json")
 	if err != nil {
 		t.Fatal(err)
 	}

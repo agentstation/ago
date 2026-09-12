@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"encoding/json"
@@ -7,7 +7,7 @@ import (
 )
 
 // SARIF 2.1.0 is the interchange format GitHub code scanning ingests. This
-// file models only the subset of the schema ago populates. The omitempty tags
+// file models only the subset of the schema goago populates. The omitempty tags
 // keep the document to what a static analysis tool without fixes needs to emit.
 type sarifLog struct {
 	Schema  string     `json:"$schema"`
@@ -129,9 +129,9 @@ func (r *Report) writeSARIF(w io.Writer) error {
 		Version: "2.1.0",
 		Runs: []sarifRun{{
 			Tool: sarifTool{Driver: sarifDriver{
-				Name:           "ago",
+				Name:           "goago",
 				Version:        Version,
-				InformationURI: "https://github.com/agentstation/ago",
+				InformationURI: "https://github.com/agentstation/goago",
 				Rules:          declared,
 			}},
 			Results: results,

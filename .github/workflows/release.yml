@@ -29,8 +29,8 @@ jobs:
 
       - name: Dogfood
         run: |
-          go build -o ago ./cmd/ago
-          ./ago ./...
+          go build -o goago ./cmd/goago
+          ./goago ./...
 
   release:
     name: Release

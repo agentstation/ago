@@ -7,26 +7,26 @@ end:
 
 // A suppressed goto, in the own-line form.
 func Suppressed() {
-	//ago:ignore no-goto -- hand-written state machine
+	//goago:ignore no-goto -- hand-written state machine
 	goto end
 end:
 }
 
 // A suppressed goto, in the trailing form.
 func SuppressedTrailing() {
-	goto end //ago:ignore no-goto -- trailing directive
+	goto end //goago:ignore no-goto -- trailing directive
 end:
 }
 
 // The wildcard suppresses every rule on the line.
 func SuppressedWildcard() {
-	goto end //ago:ignore * -- suppress everything here
+	goto end //goago:ignore * -- suppress everything here
 end:
 }
 
 // A directive with no reason suppresses nothing.
 func NotSuppressed() {
-	//ago:ignore no-goto
+	//goago:ignore no-goto
 	goto end // want `goto end`
 end:
 }

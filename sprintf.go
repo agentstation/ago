@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import "fmt"
 

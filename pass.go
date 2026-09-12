@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"go/ast"
@@ -17,7 +17,7 @@ func newAnalyzer(name, doc string, run func(*checkPass)) *analysis.Analyzer {
 	a := &analysis.Analyzer{
 		Name:     identName(name),
 		Doc:      doc,
-		URL:      "https://github.com/agentstation/ago/blob/main/docs/rules.md#" + name,
+		URL:      "https://github.com/agentstation/goago/blob/main/docs/rules.md#" + name,
 		Requires: []*analysis.Analyzer{ignoresAnalyzer},
 	}
 	a.Run = func(pass *analysis.Pass) (any, error) {
@@ -29,7 +29,7 @@ func newAnalyzer(name, doc string, run func(*checkPass)) *analysis.Analyzer {
 }
 
 // A checkPass is the analysis pass a rule sees. It narrows [analysis.Pass] to
-// the reporting path that honours //ago:ignore, so that a rule cannot report
+// the reporting path that honours //goago:ignore, so that a rule cannot report
 // around suppression by accident.
 type checkPass struct {
 	*analysis.Pass
@@ -37,7 +37,7 @@ type checkPass struct {
 	ignores *ignoreIndex
 }
 
-// reportf records a violation at n unless an //ago:ignore directive covers
+// reportf records a violation at n unless an //goago:ignore directive covers
 // that line for this rule.
 func (c *checkPass) reportf(n ast.Node, format string, args ...any) {
 	if c.ignores.suppressed(c.Fset, n.Pos(), c.rule) {

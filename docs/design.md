@@ -1,7 +1,7 @@
 # Design and scope
 
-ago enforces one way to write Go across a codebase. A project selects the Go
-constructs that it accepts. ago enforces that choice.
+goago enforces one way to write Go across a codebase. A project selects the Go
+constructs that it accepts. goago enforces that choice.
 
 ## Motivation
 
@@ -16,7 +16,7 @@ Rob Pike later made the same point:
 > Rob Pike, [What We Got Right, What We Got
 > Wrong](https://commandcenter.blogspot.com/2024/01/what-we-got-right-what-we-got-wrong.html)
 
-`gofmt` gives Go one format. A project selects one way to write Go, and ago
+`gofmt` gives Go one format. A project selects one way to write Go, and goago
 enforces it. Developers and coding agents follow the same rules. CI checks
 them. [Go at Google](https://go.dev/talks/2012/splash.article) explains why
 uniform code helps teams work together.
@@ -31,10 +31,10 @@ Recent releases added more ways to write Go. Go 1.26 let a generic type refer
 to itself in its type parameter list. It also let `new` accept an expression
 instead of a type. Go 1.27 let methods declare type parameters.
 
-ago does not claim that these features are bad. Each project selects one way to
+goago does not claim that these features are bad. Each project selects one way to
 write Go. The linter enforces that choice before review.
 
-Each ago rule removes an alternative. No rule adds syntax, rewrites code, or
+Each goago rule removes an alternative. No rule adds syntax, rewrites code, or
 changes semantics.
 
 ## Policy boundary
@@ -45,7 +45,7 @@ mistake. Its generics argument is close to the opposite position. Defining
 generic containers in the language without programmer access to that
 genericity was arguably an error.
 
-Treat ago as a house policy, not an appeal to authority.
+Treat goago as a house policy, not an appeal to authority.
 
 ## Why a linter instead of a Go fork
 
@@ -81,14 +81,14 @@ generic functions or types in 115 non-test files. A compiler that rejects
 those constructs cannot build its own standard library.
 
 A useful compiler fork must restrict first-party packages while it exempts
-`GOROOT` and the module cache. ago gets that scope from package loading.
+`GOROOT` and the module cache. goago gets that scope from package loading.
 
 A fork also needs its own distribution and version pin through
 `GOTOOLCHAIN=local`. It needs a rebase every six months. A stock `gopls` can
 disagree with that compiler unless the project forks the language server too.
 
 Use a compiler fork when a dependency must not contain one or two constructs.
-Use ago for source policy in the code that the project owns.
+Use goago for source policy in the code that the project owns.
 
 ## Measured evidence
 

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/agentstation/ago"
+	"github.com/agentstation/goago"
 )
 
 func TestHelpWritesOneCompleteDocumentToStdout(t *testing.T) {
@@ -42,15 +42,15 @@ func TestInitWritesMinimalPolicyAtModuleRoot(t *testing.T) {
 	if status := writeInitConfig(nested, &stdout, &stderr); status != exitClean {
 		t.Fatalf("status = %d, stderr = %q", status, stderr.String())
 	}
-	path := filepath.Join(root, ago.ConfigName)
+	path := filepath.Join(root, goago.ConfigName)
 	b, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(b) != ago.ExampleConfig() {
+	if string(b) != goago.ExampleConfig() {
 		t.Errorf("config differs from ExampleConfig:\n%s", b)
 	}
-	if _, err := os.Stat(filepath.Join(nested, ago.ConfigName)); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(nested, goago.ConfigName)); !os.IsNotExist(err) {
 		t.Errorf("nested config exists or stat failed: %v", err)
 	}
 	if !strings.Contains(stdout.String(), "at go.mod root") {
@@ -61,7 +61,7 @@ func TestInitWritesMinimalPolicyAtModuleRoot(t *testing.T) {
 func TestInitRejectsAnExistingParentPolicy(t *testing.T) {
 	root := t.TempDir()
 	writeTestFile(t, filepath.Join(root, "go.mod"), "module example.com/project\n\ngo 1.25\n")
-	policy := filepath.Join(root, ago.ConfigName)
+	policy := filepath.Join(root, goago.ConfigName)
 	writeTestFile(t, policy, "enable: [default]\n")
 	nested := filepath.Join(root, "internal", "example")
 	if err := os.MkdirAll(nested, 0o755); err != nil {
@@ -100,7 +100,7 @@ func TestInitRequiresModuleOrWorkspace(t *testing.T) {
 
 func TestListJSONReportsResolvedPolicy(t *testing.T) {
 	configDir := t.TempDir()
-	configPath := filepath.Join(configDir, ago.ConfigName)
+	configPath := filepath.Join(configDir, goago.ConfigName)
 	writeTestFile(t, configPath, "version: 1\nenable: [default]\ntests: false\nexclude: [generated]\n")
 
 	tests := []struct {
@@ -137,8 +137,8 @@ func TestListJSONReportsResolvedPolicy(t *testing.T) {
 			if got.Policy.RuleSource != tt.wantSource || got.Policy.ConfigPath != tt.wantPath || got.Policy.ConfigVersion != tt.wantVersion || got.Policy.ConfigDisabled != tt.wantDisabled || got.Policy.Tests != tt.wantTests || !slices.Equal(got.Policy.Exclude, tt.wantExclude) {
 				t.Errorf("policy = %+v, want source=%q path=%q version=%d disabled=%t tests=%t exclude=%v", got.Policy, tt.wantSource, tt.wantPath, tt.wantVersion, tt.wantDisabled, tt.wantTests, tt.wantExclude)
 			}
-			if len(got.Rules) != len(ago.Rules()) {
-				t.Errorf("rules = %d, want %d", len(got.Rules), len(ago.Rules()))
+			if len(got.Rules) != len(goago.Rules()) {
+				t.Errorf("rules = %d, want %d", len(got.Rules), len(goago.Rules()))
 			}
 		})
 	}

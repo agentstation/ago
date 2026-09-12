@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"bytes"
@@ -87,7 +87,7 @@ func TestGitHubFormatOneLinePerFinding(t *testing.T) {
 		t.Fatal(err)
 	}
 	got := buf.String()
-	want := "::error file=x.go,line=1,col=1,endLine=0,endColumn=0,title=ago no-goto::ok\n"
+	want := "::error file=x.go,line=1,col=1,endLine=0,endColumn=0,title=goago no-goto::ok\n"
 	if got != want {
 		t.Fatalf("got %q\nwant %q", got, want)
 	}

@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
-// Severity classifies how strongly ago objects to a construct. Every rule
+// Severity classifies how strongly goago objects to a construct. Every rule
 // currently reports at [Error]. The field exists so that report formats with
 // a severity axis, such as SARIF, carry an honest value rather than a
 // hardcoded one.
@@ -24,20 +24,20 @@ const (
 
 // A Rule is one restriction, paired with the analyzer that enforces it.
 //
-// Name is the canonical kebab-case name used by the ago command, by .ago.yml,
-// and by //ago:ignore directives. The Analyzer.Name field is the same name
+// Name is the canonical kebab-case name used by the goago command, by .goago.yml,
+// and by //goago:ignore directives. The Analyzer.Name field is the same name
 // with the hyphens removed, because go/analysis requires analyzer names to be
-// valid Go identifiers. The ago command accepts either spelling.
+// valid Go identifiers. The goago command accepts either spelling.
 type Rule struct {
 	// Name is the canonical kebab-case rule name, such as "no-goto".
 	Name string
-	// Summary is a single line shown by "ago -list".
+	// Summary is a single line shown by "goago -list".
 	Summary string
 	// Rationale explains why the rule exists and when to turn it off. It is
 	// the analyzer's Doc body and the text an agent reads to decide whether a
 	// violation is worth fixing or worth ignoring.
 	Rationale string
-	// Default reports whether ago enables the rule when no configuration
+	// Default reports whether goago enables the rule when no configuration
 	// selects a rule set explicitly.
 	Default bool
 	// Reverts names the Go release that introduced the construct this rule
@@ -51,7 +51,7 @@ type Rule struct {
 
 // DocURL returns the rule-reference anchor that documents the rule.
 func (r Rule) DocURL() string {
-	return "https://github.com/agentstation/ago/blob/main/docs/rules.md#" + r.Name
+	return "https://github.com/agentstation/goago/blob/main/docs/rules.md#" + r.Name
 }
 
 // registry holds every rule in registration order.
@@ -59,12 +59,12 @@ var registry []Rule
 
 // register adds a rule to the registry and wires up its analyzer metadata.
 // Each rule file calls it at package level. It panics on a duplicate name
-// because that is a programming error in ago itself, not a condition a caller
+// because that is a programming error in goago itself, not a condition a caller
 // can handle.
 func register(r Rule) Rule {
 	for _, existing := range registry {
 		if existing.Name == r.Name {
-			panic(fmt.Sprintf("ago: duplicate rule %q", r.Name))
+			panic(fmt.Sprintf("goago: duplicate rule %q", r.Name))
 		}
 	}
 	registry = append(registry, r)
@@ -77,7 +77,7 @@ func identName(name string) string {
 	return strings.ReplaceAll(name, "-", "")
 }
 
-// Rules returns every rule ago knows about, in registration order.
+// Rules returns every rule goago knows about, in registration order.
 func Rules() []Rule {
 	out := make([]Rule, len(registry))
 	copy(out, registry)
