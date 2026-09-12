@@ -7,11 +7,11 @@ older releases do not receive separate security support.
 
 ## Reporting a vulnerability
 
-Open a private advisory at https://github.com/agentstation/ago/security/advisories/new.
+Open a private advisory at https://github.com/agentstation/goago/security/advisories/new.
 Email `security@agentstation.ai`. Do not open a public issue for a suspected
 vulnerability.
 
-Include the affected version (`ago -version`), the Go toolchain version, the
+Include the affected version (`goago -version`), the Go toolchain version, the
 command you ran, a minimal reproduction, and the security effect. Remove any
 proprietary source from your report. A synthetic reproduction is always
 preferable.
@@ -22,14 +22,14 @@ before that coordination is complete.
 
 ## Threat model
 
-`ago` is a static analyzer. It reads Go source and configuration and writes a
+`goago` is a static analyzer. It reads Go source and configuration and writes a
 report. It executes no code from the packages it analyzes.
 
 In scope:
 
-- A crafted `.ago.yml` or `//ago:ignore` directive that causes `ago` to
+- A crafted `.goago.yml` or `//goago:ignore` directive that causes `goago` to
   crash, hang, or consume unbounded memory.
-- A crafted source file that causes `ago` to silently skip analysis. A
+- A crafted source file that causes `goago` to silently skip analysis. A
   violation then goes unreported while the exit status stays `0`.
 - Output injection. A finding message, file path, or rule name that escapes
   SARIF or GitHub encoding and forges an alert.
@@ -37,16 +37,16 @@ In scope:
 
 Out of scope:
 
-- `ago` invokes the Go toolchain through `golang.org/x/tools/go/packages`,
-  which loads and builds package metadata. Running `ago` on untrusted source
+- `goago` invokes the Go toolchain through `golang.org/x/tools/go/packages`,
+  which loads and builds package metadata. Running `goago` on untrusted source
   is equivalent to running `go list` on it, and carries the same risk. Do not
-  run `ago` on source you would not run `go build` on.
+  run `goago` on source you would not run `go build` on.
 - Vulnerabilities in the Go toolchain or in `golang.org/x/tools`. Report those
   upstream. We will pick up the fix on the next release.
 - A rule producing a false positive or a false negative. That is a correctness
   bug. Please file it as a normal issue.
 
-ago rejects a `.ago.yml` larger than 1 MiB and an `exclude` list longer than
+goago rejects a `.goago.yml` larger than 1 MiB and an `exclude` list longer than
 1024 patterns. A config that excludes every package is an error, not a clean
 run.
 

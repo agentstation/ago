@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import "runtime/debug"
 
@@ -16,7 +16,7 @@ func resolveVersion(linked string, info *debug.BuildInfo) string {
 	if linked != "" && linked != "dev" {
 		return linked
 	}
-	if info != nil && info.Main.Path == "github.com/agentstation/ago" &&
+	if info != nil && info.Main.Path == "github.com/agentstation/goago" &&
 		info.Main.Version != "" && info.Main.Version != "(devel)" {
 		return info.Main.Version
 	}

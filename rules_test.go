@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"go/parser"
@@ -106,7 +106,7 @@ func (t *Typed[E]) Value() E { return t.v }
 
 // TestAnalyzersValidate checks the invariants go/analysis itself imposes, so
 // that a golangci-lint plugin or a go vet -vettool build cannot fail on
-// metadata ago controls.
+// metadata goago controls.
 func TestAnalyzersValidate(t *testing.T) {
 	if err := analysis.Validate(append(Analyzers(), ignoresAnalyzer)); err != nil {
 		t.Fatal(err)

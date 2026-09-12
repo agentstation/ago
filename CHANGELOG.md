@@ -12,6 +12,18 @@ passed.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-11
+
+### Changed
+
+- Rename the repository, Go module, package, command, and golangci-lint plugin
+  to `goago`, pronounced "go ago".
+- Use `.goago.yml`, `.goago.yaml`, `goago.schema.json`, and `//goago:ignore`
+  for new policies and suppressions. Existing names still work during migration.
+- Reject competing policy files in the same directory instead of selecting one silently.
+- Rename release archives, the Homebrew cask, and the Agent Skill to `goago`.
+- Document migration in [docs/migration.md](docs/migration.md).
+
 ## [0.2.0] - 2026-08-30
 
 ### Added
@@ -116,7 +128,8 @@ Relative to the unreleased single-file prototype:
   unreported. It now uses `types.Info`.
 - Passing the same package twice produced duplicate findings.
 
-[Unreleased]: https://github.com/agentstation/ago/compare/v0.2.0...HEAD
-[0.2.0]: https://github.com/agentstation/ago/releases/tag/v0.2.0
-[0.1.1]: https://github.com/agentstation/ago/releases/tag/v0.1.1
-[0.1.0]: https://github.com/agentstation/ago/releases/tag/v0.1.0
+[Unreleased]: https://github.com/agentstation/goago/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/agentstation/goago/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/agentstation/goago/releases/tag/v0.2.0
+[0.1.1]: https://github.com/agentstation/goago/releases/tag/v0.1.1
+[0.1.0]: https://github.com/agentstation/goago/releases/tag/v0.1.0

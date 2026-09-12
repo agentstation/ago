@@ -3,7 +3,7 @@ package golangci
 import (
 	"testing"
 
-	"github.com/agentstation/ago"
+	"github.com/agentstation/goago"
 	"github.com/golangci/plugin-module-register/register"
 )
 
@@ -17,7 +17,7 @@ func TestNew(t *testing.T) {
 		{
 			name: "no settings runs the default rule set",
 			conf: map[string]any{},
-			want: ago.DefaultNames(),
+			want: goago.DefaultNames(),
 		},
 		{
 			name: "explicit enable selects exactly those rules",
@@ -27,12 +27,12 @@ func TestNew(t *testing.T) {
 		{
 			name: "disable subtracts from the default set",
 			conf: map[string]any{"enable": []string{"default"}, "disable": []string{"no-goto"}},
-			want: without(ago.DefaultNames(), "no-goto"),
+			want: without(goago.DefaultNames(), "no-goto"),
 		},
 		{
 			name: "all selects every rule",
 			conf: map[string]any{"enable": []string{"all"}},
-			want: ago.Names(),
+			want: goago.Names(),
 		},
 		{
 			name:    "an unknown rule is an error, not a silent no-op",
@@ -69,7 +69,7 @@ func TestNew(t *testing.T) {
 			}
 			got := make([]string, len(analyzers))
 			for i, a := range analyzers {
-				rule, ok := ago.Lookup(a.Name)
+				rule, ok := goago.Lookup(a.Name)
 				if !ok {
 					t.Fatalf("analyzer %q is not a known rule", a.Name)
 				}

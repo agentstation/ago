@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"encoding/json"
@@ -43,19 +43,19 @@ func ParseFormat(s string) (Format, error) {
 	return "", fmt.Errorf("unknown format %q; want one of %s", s, strings.Join(names, ", "))
 }
 
-// A Report is everything one ago run produced. The JSON encoding of this type
-// is ago's machine-readable contract. Fields grow over time but existing
+// A Report is everything one goago run produced. The JSON encoding of this type
+// is goago's machine-readable contract. Fields grow over time but existing
 // fields keep their name and meaning.
 type Report struct {
 	// SchemaVersion is the JSON report schema version.
 	SchemaVersion int `json:"schemaVersion"`
-	// Version is the ago version that produced the report.
+	// Version is the goago version that produced the report.
 	Version string `json:"version"`
 	// Rules lists the canonical names of the rules that ran, sorted.
 	Rules []string `json:"rules"`
 	// Findings holds every violation, ordered by file, line, and column.
 	Findings []Finding `json:"findings"`
-	// StaleIgnores lists //ago:ignore directives that suppressed nothing.
+	// StaleIgnores lists //goago:ignore directives that suppressed nothing.
 	StaleIgnores []StaleIgnore `json:"staleIgnores"`
 	// Errors holds load or parse failures. A non-empty Errors means the run
 	// did not finish and Findings may omit violations.
@@ -105,7 +105,7 @@ func (r *Report) writeText(w io.Writer) error {
 		}
 	}
 	for _, s := range r.StaleIgnores {
-		if _, err := fmt.Fprintf(w, "%s: //ago:ignore suppressed nothing (%s)\n",
+		if _, err := fmt.Fprintf(w, "%s: //goago:ignore suppressed nothing (%s)\n",
 			s.Position(), strings.Join(s.Rules, ",")); err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func (r *Report) writeGitHub(w io.Writer) error {
 			level,
 			escapeWorkflowParam(f.File),
 			f.Line, f.Column, f.EndLine, f.EndColumn,
-			escapeWorkflowParam("ago "+f.Rule),
+			escapeWorkflowParam("goago "+f.Rule),
 			escapeWorkflowData(f.Message)); err != nil {
 			return err
 		}
@@ -139,8 +139,8 @@ func (r *Report) writeGitHub(w io.Writer) error {
 		if _, err := fmt.Fprintf(w,
 			"::warning file=%s,line=%d,col=%d,title=%s::%s\n",
 			escapeWorkflowParam(s.File), s.Line, s.Column,
-			escapeWorkflowParam("ago stale ignore"),
-			escapeWorkflowData("//ago:ignore suppressed nothing: "+strings.Join(s.Rules, ","))); err != nil {
+			escapeWorkflowParam("goago stale ignore"),
+			escapeWorkflowData("//goago:ignore suppressed nothing: "+strings.Join(s.Rules, ","))); err != nil {
 			return err
 		}
 	}

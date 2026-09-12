@@ -10,11 +10,11 @@ assignees: ''
 
 **The problem**
 
-<!-- What are you trying to do that ago makes hard today? -->
+<!-- What are you trying to do that goago makes hard today? -->
 
 **What you would like**
 
 **Alternatives you considered**
 
 <!-- Including: is this something a config option, an output format, or your
-     own analysis.Analyzer built on ago.Rules() could already do? -->
+     own analysis.Analyzer built on goago.Rules() could already do? -->

@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: A rule reported the wrong thing, or ago failed to run
+about: A rule reported the wrong thing, or goago failed to run
 title: ''
 labels: bug
 assignees: ''
@@ -11,7 +11,7 @@ assignees: ''
 <!-- Include the exact command and its output. -->
 
 ```
-$ ago ./...
+$ goago ./...
 ```
 
 **What you expected**
@@ -27,12 +27,12 @@ package p
 
 **Which rule**
 
-<!-- If a specific rule applies, name it and paste `ago -explain <rule>`
+<!-- If a specific rule applies, name it and paste `goago -explain <rule>`
      if the rationale seems to disagree with the behavior you saw. -->
 
 **Environment**
 
-- `ago -version`:
+- `goago -version`:
 - `go version`:
 - OS and architecture:
-- `.ago.yml` (if any):
+- `.goago.yml` (if any):

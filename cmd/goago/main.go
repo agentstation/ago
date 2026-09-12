@@ -1,18 +1,18 @@
-// Command ago enforces one way to write Go across a codebase.
+// Command goago enforces one way to write Go across a codebase.
 //
 // A project selects the Go constructs that it accepts. Developers and coding
 // agents use the same rule policy, and CI enforces it.
 //
-// ago only ever rejects language constructs. It never adds syntax, never
-// rewrites code, and never changes semantics. Code that passes ago is
+// goago only ever rejects language constructs. It never adds syntax, never
+// rewrites code, and never changes semantics. Code that passes goago is
 // ordinary Go that builds with the stock toolchain.
 //
 // Usage:
 //
-//	ago [flags] [packages]
+//	goago [flags] [packages]
 //
 // The package arguments are go/packages patterns, the same ones go build and
-// go vet accept. With no arguments ago checks ./... under the working
+// go vet accept. With no arguments goago checks ./... under the working
 // directory.
 //
 // Flags:
@@ -29,13 +29,13 @@
 //
 //	-format f         text, json, sarif, or github (default text).
 //
-//	-config path      Read this config instead of searching for .ago.yml.
+//	-config path      Read this config instead of searching for .goago.yml.
 //
-//	-no-config        Ignore any .ago.yml on disk.
+//	-no-config        Ignore any .goago.yml on disk.
 //
-//	-init             Write an optional .ago.yml at the project root.
+//	-init             Write an optional .goago.yml at the project root.
 //
-//	-stale-ignores    Report //ago:ignore directives that suppressed nothing.
+//	-stale-ignores    Report //goago:ignore directives that suppressed nothing.
 //
 //	-version          Print the version and exit.
 //
@@ -43,7 +43,7 @@
 //
 //	0  No violations.
 //	1  At least one violation.
-//	2  ago could not complete the run.
+//	2  goago could not complete the run.
 //
 // A load or type error does not by itself abort the run. The command reports
 // what it could analyze and exits 2 only when it produced no usable result.
@@ -59,7 +59,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/agentstation/ago"
+	"github.com/agentstation/goago"
 )
 
 // Exit statuses. They are part of the command's contract with CI and with
@@ -75,7 +75,7 @@ func main() {
 }
 
 func run(args []string, stdout, stderr io.Writer) int {
-	fs := flag.NewFlagSet("ago", flag.ContinueOnError)
+	fs := flag.NewFlagSet("goago", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	var (
 		listFlag    = fs.Bool("list", false, "list the rule set and exit")
@@ -84,10 +84,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 		allFlag     = fs.Bool("all", false, "run every rule")
 		testsFlag   = fs.Bool("tests", false, "also check _test.go files")
 		formatFlag  = fs.String("format", "text", "output format: text, json, sarif, or github")
-		configFlag  = fs.String("config", "", "read this config instead of searching for .ago.yml")
-		noConfig    = fs.Bool("no-config", false, "ignore any .ago.yml on disk")
-		initFlag    = fs.Bool("init", false, "write an optional .ago.yml at the project root and exit")
-		staleFlag   = fs.Bool("stale-ignores", false, "report //ago:ignore directives that suppressed nothing")
+		configFlag  = fs.String("config", "", "read this config instead of searching for .goago.yml")
+		noConfig    = fs.Bool("no-config", false, "ignore any .goago.yml on disk")
+		initFlag    = fs.Bool("init", false, "write an optional .goago.yml at the project root and exit")
+		staleFlag   = fs.Bool("stale-ignores", false, "report //goago:ignore directives that suppressed nothing")
 		versionFlag = fs.Bool("version", false, "print the version and exit")
 	)
 	fs.Usage = func() { usage(stdout, fs) }
@@ -101,7 +101,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 
 	switch {
 	case *versionFlag:
-		fmt.Fprintf(stdout, "ago %s\n", ago.Version)
+		fmt.Fprintf(stdout, "goago %s\n", goago.Version)
 		return exitClean
 	case *initFlag:
 		return writeInitConfig(".", stdout, stderr)
@@ -109,29 +109,29 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return explain(stdout, stderr, *explainFlag)
 	}
 
-	format, err := ago.ParseFormat(*formatFlag)
+	format, err := goago.ParseFormat(*formatFlag)
 	if err != nil {
-		fmt.Fprintf(stderr, "ago: %v\n", err)
+		fmt.Fprintf(stderr, "goago: %v\n", err)
 		return exitError
 	}
 
-	cfg := &ago.Config{}
+	cfg := &goago.Config{}
 	if !*noConfig {
-		cfg, err = ago.LoadConfig(".", *configFlag)
+		cfg, err = goago.LoadConfig(".", *configFlag)
 		if err != nil {
-			fmt.Fprintf(stderr, "ago: %v\n", err)
+			fmt.Fprintf(stderr, "goago: %v\n", err)
 			return exitError
 		}
 	}
 
 	overrides, err := ruleOverrides(*rulesFlag, *allFlag)
 	if err != nil {
-		fmt.Fprintf(stderr, "ago: %v\n", err)
+		fmt.Fprintf(stderr, "goago: %v\n", err)
 		return exitError
 	}
 	rules := cfg.Enabled(overrides)
 	if len(rules) == 0 {
-		fmt.Fprintln(stderr, "ago: no rules enabled; check the rule flags or policy config")
+		fmt.Fprintln(stderr, "goago: no rules enabled; check the rule flags or policy config")
 		return exitError
 	}
 
@@ -140,7 +140,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return exitClean
 	}
 
-	report, err := ago.Check(ago.Options{
+	report, err := goago.Check(goago.Options{
 		Patterns:           fs.Args(),
 		Rules:              rules,
 		Tests:              *testsFlag || cfg.Tests,
@@ -148,32 +148,32 @@ func run(args []string, stdout, stderr io.Writer) int {
 		ReportStaleIgnores: *staleFlag,
 	})
 	if err != nil {
-		fmt.Fprintf(stderr, "ago: %v\n", err)
+		fmt.Fprintf(stderr, "goago: %v\n", err)
 		return exitError
 	}
 	if err := report.Write(stdout, format); err != nil {
-		fmt.Fprintf(stderr, "ago: writing report: %v\n", err)
+		fmt.Fprintf(stderr, "goago: writing report: %v\n", err)
 		return exitError
 	}
 
 	// Load errors go to stderr so that they never contaminate a machine-read
 	// stdout, and are already carried in the JSON and SARIF documents.
-	if format == ago.FormatText || format == ago.FormatGitHub {
+	if format == goago.FormatText || format == goago.FormatGitHub {
 		for _, e := range report.Errors {
-			fmt.Fprintf(stderr, "ago: %s\n", e)
+			fmt.Fprintf(stderr, "goago: %s\n", e)
 		}
 	}
 
 	switch {
 	case len(report.Findings) > 0 || len(report.StaleIgnores) > 0:
-		if format == ago.FormatText {
+		if format == goago.FormatText {
 			fmt.Fprintf(stderr, "\n%s\n", summary(report))
 		}
 		return exitViolations
 	case len(report.Errors) > 0 && len(report.Rules) > 0 && reportedNothing(report):
 		// Nothing was analyzable. Exiting 0 here would report a clean tree
 		// that was never actually checked.
-		fmt.Fprintln(stderr, "ago: no package could be analyzed")
+		fmt.Fprintln(stderr, "goago: no package could be analyzed")
 		return exitError
 	default:
 		return exitClean
@@ -182,12 +182,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 
 // reportedNothing reports whether the run produced no findings at all, which
 // combined with load errors means the run was not meaningful.
-func reportedNothing(r *ago.Report) bool {
+func reportedNothing(r *goago.Report) bool {
 	return len(r.Findings) == 0 && len(r.StaleIgnores) == 0
 }
 
 // summary renders the one-line tally printed after text output.
-func summary(r *ago.Report) string {
+func summary(r *goago.Report) string {
 	var parts []string
 	if n := len(r.Findings); n > 0 {
 		parts = append(parts, fmt.Sprintf("%d violation%s", n, plural(n)))
@@ -226,9 +226,9 @@ func ruleOverrides(rulesFlag string, all bool) ([]string, error) {
 			out = append(out, name)
 			continue
 		}
-		r, ok := ago.Lookup(name)
+		r, ok := goago.Lookup(name)
 		if !ok {
-			return nil, fmt.Errorf("unknown rule %q; run \"ago -list\" for the rule set", name)
+			return nil, fmt.Errorf("unknown rule %q; run \"goago -list\" for the rule set", name)
 		}
 		out = append(out, r.Name)
 	}
@@ -236,14 +236,14 @@ func ruleOverrides(rulesFlag string, all bool) ([]string, error) {
 }
 
 // listRules prints the rule set. In text form an asterisk marks the enabled
-// rules, so "ago -list" doubles as a check on what the current config
+// rules, so "goago -list" doubles as a check on what the current config
 // resolves to.
-func listRules(stdout io.Writer, format ago.Format, enabled []ago.Rule, policy policyJSON) {
+func listRules(stdout io.Writer, format goago.Format, enabled []goago.Rule, policy policyJSON) {
 	on := map[string]bool{}
 	for _, r := range enabled {
 		on[r.Name] = true
 	}
-	if format == ago.FormatJSON {
+	if format == goago.FormatJSON {
 		writeRulesJSON(stdout, on, policy)
 		return
 	}
@@ -263,12 +263,12 @@ func listRules(stdout io.Writer, format ago.Format, enabled []ago.Rule, policy p
 	}
 	fmt.Fprintf(stdout, "Tests:  %t\nExcludes: %d\n\n", policy.Tests, len(policy.Exclude))
 	width := 0
-	for _, r := range ago.Rules() {
+	for _, r := range goago.Rules() {
 		if len(r.Name) > width {
 			width = len(r.Name)
 		}
 	}
-	for _, r := range ago.Rules() {
+	for _, r := range goago.Rules() {
 		mark := " "
 		if on[r.Name] {
 			mark = "*"
@@ -279,8 +279,8 @@ func listRules(stdout io.Writer, format ago.Format, enabled []ago.Rule, policy p
 		}
 		fmt.Fprintf(stdout, "%s %-*s  %s%s\n", mark, width, r.Name, r.Summary, reverts)
 	}
-	fmt.Fprintf(stdout, "\n* = enabled for this run (%d of %d)\n", len(enabled), len(ago.Rules()))
-	fmt.Fprintln(stdout, `Run "ago -explain <rule>" for the full rationale.`)
+	fmt.Fprintf(stdout, "\n* = enabled for this run (%d of %d)\n", len(enabled), len(goago.Rules()))
+	fmt.Fprintln(stdout, `Run "goago -explain <rule>" for the full rationale.`)
 }
 
 // ruleJSON is the -list -format json schema. It is what a coding agent reads
@@ -307,7 +307,7 @@ type policyJSON struct {
 	Exclude        []string `json:"exclude"`
 }
 
-func resolvedPolicy(cfg *ago.Config, overrides []string, noConfig, testsFlag bool) policyJSON {
+func resolvedPolicy(cfg *goago.Config, overrides []string, noConfig, testsFlag bool) policyJSON {
 	source := "built-in"
 	if cfg.Path() != "" {
 		source = "config"
@@ -337,8 +337,8 @@ func writeRulesJSON(stdout io.Writer, enabled map[string]bool, policy policyJSON
 		Version       string     `json:"version"`
 		Policy        policyJSON `json:"policy"`
 		Rules         []ruleJSON `json:"rules"`
-	}{SchemaVersion: ruleCatalogueSchemaVersion, Version: ago.Version, Policy: policy}
-	for _, r := range ago.Rules() {
+	}{SchemaVersion: ruleCatalogueSchemaVersion, Version: goago.Version, Policy: policy}
+	for _, r := range goago.Rules() {
 		out.Rules = append(out.Rules, ruleJSON{
 			Name:      r.Name,
 			Analyzer:  r.Analyzer.Name,
@@ -358,9 +358,9 @@ const ruleCatalogueSchemaVersion = 1
 
 // explain prints one rule's full rationale.
 func explain(stdout, stderr io.Writer, name string) int {
-	r, ok := ago.Lookup(name)
+	r, ok := goago.Lookup(name)
 	if !ok {
-		fmt.Fprintf(stderr, "ago: unknown rule %q\n", name)
+		fmt.Fprintf(stderr, "goago: unknown rule %q\n", name)
 		suggest(stderr, name)
 		return exitError
 	}
@@ -380,42 +380,42 @@ func explain(stdout, stderr io.Writer, name string) int {
 // suggest prints the rules whose names share a prefix with a misspelling.
 func suggest(stderr io.Writer, name string) {
 	var near []string
-	for _, n := range ago.Names() {
+	for _, n := range goago.Names() {
 		if strings.Contains(n, name) || strings.Contains(name, n) {
 			near = append(near, n)
 		}
 	}
 	sort.Strings(near)
 	if len(near) > 0 {
-		fmt.Fprintf(stderr, "ago: did you mean %s?\n", strings.Join(near, ", "))
+		fmt.Fprintf(stderr, "goago: did you mean %s?\n", strings.Join(near, ", "))
 		return
 	}
-	fmt.Fprintln(stderr, `ago: run "ago -list" for the rule set`)
+	fmt.Fprintln(stderr, `goago: run "goago -list" for the rule set`)
 }
 
 // writeInitConfig writes a minimal policy at the nearest Go module or
 // workspace root. It refuses to create a second policy below one that already
 // applies.
 func writeInitConfig(dir string, stdout, stderr io.Writer) int {
-	cfg, err := ago.LoadConfig(dir, "")
+	cfg, err := goago.LoadConfig(dir, "")
 	if err != nil {
-		fmt.Fprintf(stderr, "ago: %v\n", err)
+		fmt.Fprintf(stderr, "goago: %v\n", err)
 		return exitError
 	}
 	if cfg.Path() != "" {
-		fmt.Fprintf(stderr, "ago: policy already exists: %s\n", cfg.Path())
+		fmt.Fprintf(stderr, "goago: policy already exists: %s\n", cfg.Path())
 		return exitError
 	}
 	root, marker, err := findProjectRoot(dir)
 	if err != nil {
-		fmt.Fprintf(stderr, "ago: %v\n", err)
+		fmt.Fprintf(stderr, "goago: %v\n", err)
 		return exitError
 	}
-	path := filepath.Join(root, ago.ConfigName)
+	path := filepath.Join(root, goago.ConfigName)
 	// A config the whole team commits and reads is 0644.
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644) //nolint:gosec // team-readable by design
 	if err != nil {
-		fmt.Fprintf(stderr, "ago: %v\n", err)
+		fmt.Fprintf(stderr, "goago: %v\n", err)
 		return exitError
 	}
 	removeOnError := true
@@ -424,13 +424,13 @@ func writeInitConfig(dir string, stdout, stderr io.Writer) int {
 			_ = os.Remove(path)
 		}
 	}()
-	if _, err := io.WriteString(f, ago.ExampleConfig()); err != nil {
+	if _, err := io.WriteString(f, goago.ExampleConfig()); err != nil {
 		_ = f.Close()
-		fmt.Fprintf(stderr, "ago: writing %s: %v\n", path, err)
+		fmt.Fprintf(stderr, "goago: writing %s: %v\n", path, err)
 		return exitError
 	}
 	if err := f.Close(); err != nil {
-		fmt.Fprintf(stderr, "ago: writing %s: %v\n", path, err)
+		fmt.Fprintf(stderr, "goago: writing %s: %v\n", path, err)
 		return exitError
 	}
 	removeOnError = false
@@ -459,13 +459,13 @@ func findProjectRoot(dir string) (string, string, error) {
 }
 
 func usage(w io.Writer, fs *flag.FlagSet) {
-	fmt.Fprint(w, `ago enforces one way to write Go across a codebase.
+	fmt.Fprint(w, `goago enforces one way to write Go across a codebase.
 
 Usage:
-  ago [flags] [packages]
+  goago [flags] [packages]
 
 Package arguments are go/packages patterns, the same ones go build accepts.
-With no arguments ago checks ./... under the working directory.
+With no arguments goago checks ./... under the working directory.
 
 Flags:
 `)
@@ -475,8 +475,8 @@ Flags:
 Exit status:
   0  no violations
   1  at least one violation
-  2  ago could not complete the run
+  2  goago could not complete the run
 
-Docs: https://github.com/agentstation/ago
+Docs: https://github.com/agentstation/goago
 `)
 }

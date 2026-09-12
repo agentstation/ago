@@ -1,5 +1,5 @@
-# ago rule policy. See https://github.com/agentstation/ago#rules
-# Run "ago -list" for the rule set this binary supports.
+# goago rule policy. See https://github.com/agentstation/goago#rules
+# Run "goago -list" for the rule set this binary supports.
 
 enable:
   - no-self-referential-constraints  # A generic type may not name itself in its own type parameter list.
@@ -20,7 +20,7 @@ enable:
 
   # no-generic-decls                 # No type parameters on any func or type declaration.
 
-  - no-invalid-ignore                # Every //ago:ignore must name a known rule and give a reason.
+  - no-invalid-ignore                # Every //goago:ignore must name a known rule and give a reason.
 
   - no-dot-import                    # Import . "pkg" is forbidden.
 

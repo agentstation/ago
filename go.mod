@@ -1,4 +1,4 @@
-module github.com/agentstation/ago
+module github.com/agentstation/goago
 
 go 1.25.0
 

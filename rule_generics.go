@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"go/ast"
@@ -46,7 +46,7 @@ var RuleNoGenericDecls = register(Rule{
 	Reverts:  "1.18",
 	Default:  false,
 	Severity: Error,
-	Rationale: `Reverts generics entirely. This is the strictest rule ago offers. It is the
+	Rationale: `Reverts generics entirely. This is the strictest rule goago offers. It is the
 least likely to be right for a given codebase: it forbids type parameters on
 any func or type declaration.
 

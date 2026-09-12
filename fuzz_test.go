@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"bytes"
@@ -34,7 +34,7 @@ func FuzzLoadConfig(f *testing.F) {
 func FuzzGitHubReport(f *testing.F) {
 	f.Add("x.go", "no-goto", "goto; use a loop", 1, 1)
 	f.Add("a.go,line=1::x", "no-goto", "::error::forged\nnext", 2, 3)
-	f.Add("dir/\nfile.go", "ago stale ignore", "%0A::warning::", 0, 0)
+	f.Add("dir/\nfile.go", "goago stale ignore", "%0A::warning::", 0, 0)
 	f.Fuzz(func(t *testing.T, file, rule, msg string, line, col int) {
 		r := &Report{
 			Findings: []Finding{{
@@ -78,11 +78,11 @@ func FuzzSkip(f *testing.F) {
 }
 
 func FuzzParseDirective(f *testing.F) {
-	f.Add("//ago:ignore no-goto -- reason")
-	f.Add("//ago:ignore-file * -- generated")
-	f.Add("//ago:ignorecase not a directive")
-	f.Add("//ago:ignore")
-	f.Add("/* ago:ignore no-goto -- no */")
+	f.Add("//goago:ignore no-goto -- reason")
+	f.Add("//goago:ignore-file * -- generated")
+	f.Add("//goago:ignorecase not a directive")
+	f.Add("//goago:ignore")
+	f.Add("/* goago:ignore no-goto -- no */")
 	f.Fuzz(func(t *testing.T, text string) {
 		if len(text) > 65536 {
 			t.Skip()

@@ -1,4 +1,4 @@
-package ago
+package goago
 
 import (
 	"runtime/debug"
@@ -17,7 +17,7 @@ func TestResolveVersion(t *testing.T) {
 			name:   "module version",
 			linked: "dev",
 			info: &debug.BuildInfo{Main: debug.Module{
-				Path:    "github.com/agentstation/ago",
+				Path:    "github.com/agentstation/goago",
 				Version: "v0.2.0",
 			}},
 			want: "v0.2.0",
@@ -26,7 +26,7 @@ func TestResolveVersion(t *testing.T) {
 			name:   "local source",
 			linked: "dev",
 			info: &debug.BuildInfo{Main: debug.Module{
-				Path:    "github.com/agentstation/ago",
+				Path:    "github.com/agentstation/goago",
 				Version: "(devel)",
 			}},
 			want: "dev",

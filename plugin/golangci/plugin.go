@@ -1,23 +1,23 @@
-// Package golangci registers ago as a golangci-lint module plugin.
+// Package golangci registers goago as a golangci-lint module plugin.
 //
 // Build a custom golangci-lint binary that includes it with a .custom-gcl.yml:
 //
 //	version: v2.6.0
 //	plugins:
-//	  - module: github.com/agentstation/ago
-//	    import: github.com/agentstation/ago/plugin/golangci
+//	  - module: github.com/agentstation/goago
+//	    import: github.com/agentstation/goago/plugin/golangci
 //	    version: latest
 //
-// Then run "golangci-lint custom" and enable the "ago" linter in
+// Then run "golangci-lint custom" and enable the "goago" linter in
 // .golangci.yml. Settings select the rule set. Without them the plugin runs
-// ago's default rules.
+// goago's default rules.
 //
 //	linters:
 //	  enable:
-//	    - ago
+//	    - goago
 //	  settings:
 //	    custom:
-//	      ago:
+//	      goago:
 //	        type: module
 //	        settings:
 //	          enable: [no-goto, no-naked-return]
@@ -30,16 +30,16 @@ import (
 	"github.com/golangci/plugin-module-register/register"
 	"golang.org/x/tools/go/analysis"
 
-	"github.com/agentstation/ago"
+	"github.com/agentstation/goago"
 )
 
 func init() {
-	register.Plugin("ago", New)
+	register.Plugin("goago", New)
 }
 
 // Settings selects which rules the plugin runs. It mirrors the enable and
-// disable keys of .ago.yml, including the "default" and "all" meta-names.
-// Leaving both empty runs ago's default rule set.
+// disable keys of .goago.yml, including the "default" and "all" meta-names.
+// Leaving both empty runs goago's default rule set.
 type Settings struct {
 	Enable  []string `json:"enable"`
 	Disable []string `json:"disable"`
@@ -57,9 +57,9 @@ func New(conf any) (register.LinterPlugin, error) {
 		return nil, err
 	}
 
-	cfg := &ago.Config{Enable: settings.Enable, Disable: settings.Disable}
+	cfg := &goago.Config{Enable: settings.Enable, Disable: settings.Disable}
 	if err := cfg.Validate(); err != nil {
-		return nil, fmt.Errorf("ago: %w", err)
+		return nil, fmt.Errorf("goago: %w", err)
 	}
 
 	rules := cfg.Enabled(nil)
@@ -75,7 +75,7 @@ func (p *Plugin) BuildAnalyzers() ([]*analysis.Analyzer, error) {
 	return p.analyzers, nil
 }
 
-// GetLoadMode reports that ago's rules need full type information.
+// GetLoadMode reports that goago's rules need full type information.
 func (p *Plugin) GetLoadMode() string {
 	return register.LoadModeTypesInfo
 }

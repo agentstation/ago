@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Question or discussion
-    url: https://github.com/agentstation/ago/discussions
+    url: https://github.com/agentstation/goago/discussions
     about: Ask about usage, configuration, or whether a rule fits your codebase.
   - name: Security vulnerability
-    url: https://github.com/agentstation/ago/security/policy
+    url: https://github.com/agentstation/goago/security/policy
     about: Report privately by email. Do not open a public issue.

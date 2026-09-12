@@ -1,4 +1,4 @@
-# Contributing to ago
+# Contributing to goago
 
 Thanks for your interest. This document covers how to build, test, and propose
 changes. New rules have a higher bar than ordinary code.
@@ -6,7 +6,7 @@ changes. New rules have a higher bar than ordinary code.
 ## Build and test
 
 ```sh
-make build      # build ./cmd/ago
+make build      # build ./cmd/goago
 make test       # go test -race ./...
 make lint       # gofmt, go vet, golangci-lint
 make govulncheck  # scan the module graph
@@ -25,14 +25,14 @@ skill. Set `TECHNICAL_WRITING` if the helper is not at
 
 ## Proposing a rule
 
-`ago` is restriction-only. A rule must forbid a construct that is legal Go.
+`goago` is restriction-only. A rule must forbid a construct that is legal Go.
 It must never require adding syntax to work around it. A proposal needs four
 things.
 
 **A rationale in terms of the reader.** Say what the construct costs someone
 reading the code cold. A second place to look. A scroll upward. An identifier
 whose origin is not local. "It is confusing" is not a rationale. The rationale
-ships in the binary, so `ago -explain <rule>` prints it verbatim. Write it for
+ships in the binary, so `goago -explain <rule>` prints it verbatim. Write it for
 somebody who just hit the finding and wants to know whether to care.
 
 **An honest default.** A rule is on by default only when the construct has a

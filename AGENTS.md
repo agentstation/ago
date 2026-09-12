@@ -1,6 +1,6 @@
-# ago agent instructions
+# goago agent instructions
 
-`ago` is a restriction-only Go linter. Every rule rejects a legal Go construct.
+`goago` is a restriction-only Go linter. Every rule rejects a legal Go construct.
 No rule may add syntax, rewrite code, or change semantics.
 
 ## Technical writing
@@ -24,12 +24,12 @@ Use `GLOSSARY.md` for developer-facing prose. Run the installed
 - `rule.go` is the registry. `rule_<topic>.go` holds the analyzers.
 - Build every analyzer with `newAnalyzer`. Report through `checkPass.reportf`.
   Never use `pass.Report`. `reportf` is what applies suppression.
-- `check.go` is the driver. `config.go` is the `.ago.yml` schema.
+- `check.go` is the driver. `config.go` is the `.goago.yml` schema.
   `ignore.go` is the suppression index. `report.go` and `sarif.go` are the
   output formats.
 - Analyzers run concurrently. Cross-analyzer state needs `sync/atomic`.
 - Rule metadata is public interface. `Name` is the doc anchor and the config
-  key. `ago -explain` prints the `Rationale` string verbatim.
+  key. `goago -explain` prints the `Rationale` string verbatim.
 
 ## Evidence
 
