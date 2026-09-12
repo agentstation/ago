@@ -12,13 +12,25 @@ passed.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-11
+
+### Changed
+
+- Rename the repository, Go module, package, command, and golangci-lint plugin
+  to `goago`, pronounced "go ago".
+- Use `.goago.yml`, `.goago.yaml`, `goago.schema.json`, and `//goago:ignore`
+  for new policies and suppressions. Existing names still work during migration.
+- Reject competing policy files in the same directory instead of selecting one silently.
+- Rename release archives, the Homebrew cask, and the Agent Skill to `goago`.
+- Document migration in [docs/migration.md](docs/migration.md).
+
 ## [0.2.0] - 2026-08-30
 
 ### Added
 
 - Report the rule source, config path, test setting, and exclude patterns in
   `-list`. JSON reports and the rule catalogue now include `schemaVersion: 1`.
-- Publish `goago.schema.json` for `.goago.yml` editor validation. New generated
+- Publish `ago.schema.json` for `.ago.yml` editor validation. New generated
   policies declare config schema version 1. Unversioned v0.1 policies remain
   valid.
 - Add command tests for help output, policy discovery, and config creation.
@@ -26,7 +38,7 @@ passed.
 ### Changed
 
 - Make the zero-config Go module path the primary adoption flow. A project can
-  run the pinned default policy after `go get -tool` without `.goago.yml`.
+  run the pinned default policy after `go get -tool` without `.ago.yml`.
 - Make `-init` an optional customization command. It writes a minimal policy
   at the nearest `go.mod` or `go.work` root and refuses a competing child
   policy.
@@ -43,11 +55,11 @@ passed.
 ### Security
 
 - Require `golang.org/x/mod` v0.40.0, which fixes GO-2026-6179 and
-  GO-2026-6180. `goago` does not call the vulnerable `sumdb` symbols. Scorecard
+  GO-2026-6180. `ago` does not call the vulnerable `sumdb` symbols. Scorecard
   still flags the module until this bump.
 - Escape `file=` and `title=` in `-format github`. A finding path can no
   longer split a GitHub Actions workflow command.
-- Reject a `.goago.yml` larger than 1 MiB. Reject an `exclude` list longer
+- Reject a `.ago.yml` larger than 1 MiB. Reject an `exclude` list longer
   than 1024 patterns. Reject an empty exclude pattern and a pattern that
   contains NUL. A config that excludes every package is an error, not a
   clean run.
@@ -71,7 +83,7 @@ passed.
 - Developer-facing prose now follows the project's strict technical-writing
   rules. `GLOSSARY.md` and `.agents/technical-writing.toml` define the
   terms and the linter config. `make prose` runs the check.
-- The primary adoption path now pins goago as a Go module tool dependency.
+- The primary adoption path now pins ago as a Go module tool dependency.
   The README separates adoption, coding-agent contracts, and integrations.
   Detailed rule and design references now live under `docs/`.
 
@@ -85,10 +97,10 @@ Initial public release.
   runs with full type information.
 - `no-f-bounded-constraints`, off by default, for F-bounded polymorphism
   written through a helper interface.
-- Suppression through `//goago:ignore` and `//goago:ignore-file`, with a mandatory
+- Suppression through `//ago:ignore` and `//ago:ignore-file`, with a mandatory
   reason. `no-invalid-ignore` reports directives that suppress nothing.
 - `-stale-ignores` to report suppressions that no longer cover a finding.
-- `.goago.yml` configuration with `enable`, `disable`, `tests`, and `exclude`.
+- `.ago.yml` configuration with `enable`, `disable`, `tests`, and `exclude`.
   Also the `default` and `all` meta-names, parent-directory search, and strict
   unknown-key rejection.
 - Four output formats: `text`, `json`, `sarif`, and `github`.
@@ -116,7 +128,8 @@ Relative to the unreleased single-file prototype:
   unreported. It now uses `types.Info`.
 - Passing the same package twice produced duplicate findings.
 
-[Unreleased]: https://github.com/agentstation/goago/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/agentstation/goago/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/agentstation/goago/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/agentstation/goago/releases/tag/v0.2.0
 [0.1.1]: https://github.com/agentstation/goago/releases/tag/v0.1.1
 [0.1.0]: https://github.com/agentstation/goago/releases/tag/v0.1.0

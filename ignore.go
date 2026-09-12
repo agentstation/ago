@@ -131,17 +131,22 @@ func runIgnores(pass *analysis.Pass) (any, error) {
 }
 
 // parseDirective turns a comment into a directive, or returns nil when the
-// comment is not an goago directive at all. A malformed directive comes back
+// comment is not a goago directive at all. A malformed directive comes back
 // with Problem set so that no-invalid-ignore can report it.
 func parseDirective(fset *token.FileSet, c *ast.Comment, src []byte) *ignoreDirective {
 	text := strings.TrimRight(c.Text, " \t")
-	fileScoped := strings.HasPrefix(text, ignoreFilePrefix)
-	if !fileScoped && !strings.HasPrefix(text, ignoreLinePrefix) {
-		return nil
+	var prefix string
+	var fileScoped bool
+	// Recognize the previous name so migration preserves suppressions.
+	for _, candidate := range []string{ignoreFilePrefix, ignoreLinePrefix, "//ago:ignore-file", "//ago:ignore"} {
+		if strings.HasPrefix(text, candidate) {
+			prefix = candidate
+			fileScoped = strings.HasSuffix(candidate, "-file")
+			break
+		}
 	}
-	prefix := ignoreLinePrefix
-	if fileScoped {
-		prefix = ignoreFilePrefix
+	if prefix == "" {
+		return nil
 	}
 	rest := text[len(prefix):]
 	// Require a separator so that "//goago:ignorecase" in prose is not a

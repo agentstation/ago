@@ -35,7 +35,7 @@ const (
 // same subset without extra instruction.
 type Config struct {
 	// Version names the config schema. Zero accepts an unversioned config from
-	// goago v0.1. Version 1 is the current schema.
+	// ago v0.1. Version 1 is the current schema.
 	Version int `yaml:"version"`
 	// Enable lists rules to turn on. The special value "default" expands to
 	// the default rule set and "all" expands to every rule. An empty list
@@ -64,12 +64,16 @@ const (
 )
 
 // LoadConfig reads a config file. A path of "" searches dir and each parent
-// directory for .goago.yml, stopping at the filesystem root. When the search
+// directory for .goago.yml or .goago.yaml, including the legacy .ago names.
+// Multiple policy files in one directory are an error. When the search
 // finds no file it returns the default config and a nil error.
 func LoadConfig(dir, path string) (*Config, error) {
 	if path == "" {
-		found, ok := findConfig(dir)
-		if !ok {
+		found, err := findConfig(dir)
+		if err != nil {
+			return nil, err
+		}
+		if found == "" {
 			return &Config{}, nil
 		}
 		path = found
@@ -113,21 +117,37 @@ func readConfigBytes(path string) ([]byte, error) {
 }
 
 // findConfig walks up from dir looking for a config file.
-func findConfig(dir string) (string, bool) {
+func findConfig(dir string) (string, error) {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
-		return "", false
+		return "", err
 	}
 	for {
-		for _, name := range []string{ConfigName, ConfigNameAlt} {
+		var found string
+		// Keep existing policies active after the command rename.
+		for _, name := range []string{ConfigName, ConfigNameAlt, ".ago.yml", ".ago.yaml"} {
 			p := filepath.Join(abs, name)
-			if fi, err := os.Stat(p); err == nil && !fi.IsDir() {
-				return p, true
+			fi, err := os.Stat(p)
+			if os.IsNotExist(err) {
+				continue
 			}
+			if err != nil {
+				return "", err
+			}
+			if fi.IsDir() {
+				continue
+			}
+			if found != "" {
+				return "", fmt.Errorf("multiple policy files: %s and %s; keep one or use -config", found, p)
+			}
+			found = p
+		}
+		if found != "" {
+			return found, nil
 		}
 		parent := filepath.Dir(abs)
 		if parent == abs {
-			return "", false
+			return "", nil
 		}
 		abs = parent
 	}

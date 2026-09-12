@@ -7,12 +7,12 @@
 
 **One way to write Go, no matter who writes it.**
 
-The name has three readings:
+Pronounce `goago` as **go ago**. The name keeps three meanings:
 
 - *agent Go*: the Go that coding agents may write.
 - *a Go*: one selected way to write Go for every human developer and coding
   agent in a project.
-- *goago*: an earlier, smaller Go. It recalls the simpler language that inspired
+- *Go ago*: an earlier, smaller Go. It recalls the simpler language that inspired
   the project, but it does not copy one past Go release.
 
 Go's original design called for [one way to write a piece of
@@ -39,6 +39,8 @@ internal/store/index.go:88:9: new() takes a type, not an expression (no-new-expr
 ```
 
 Read the [design case](docs/design.md) for the project boundary and evidence.
+
+Previously named `ago`. See [migration](docs/migration.md) to update an existing installation.
 
 ## Adopt goago in a Go repository
 

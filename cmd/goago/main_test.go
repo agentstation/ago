@@ -88,6 +88,24 @@ func TestInitWritesAtWorkspaceRoot(t *testing.T) {
 	}
 }
 
+func TestInitRejectsLegacyPolicy(t *testing.T) {
+	for _, name := range []string{".ago.yml", ".ago.yaml"} {
+		t.Run(name, func(t *testing.T) {
+			root := t.TempDir()
+			writeTestFile(t, filepath.Join(root, "go.mod"), "module example.com/project\n\ngo 1.25\n")
+			policy := filepath.Join(root, name)
+			writeTestFile(t, policy, "enable: [no-goto]\n")
+			var stdout, stderr bytes.Buffer
+			if status := writeInitConfig(root, &stdout, &stderr); status != exitError || !strings.Contains(stderr.String(), policy) {
+				t.Fatalf("status = %d, stderr = %q", status, stderr.String())
+			}
+			if _, err := os.Stat(filepath.Join(root, goago.ConfigName)); !os.IsNotExist(err) {
+				t.Fatalf("new policy created or stat failed: %v", err)
+			}
+		})
+	}
+}
+
 func TestInitRequiresModuleOrWorkspace(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	if status := writeInitConfig(t.TempDir(), &stdout, &stderr); status != exitError {
