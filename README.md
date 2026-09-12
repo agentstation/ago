@@ -79,7 +79,8 @@ go install github.com/agentstation/goago/cmd/goago@latest
 On macOS or Linux with Homebrew:
 
 ```sh
-brew install agentstation/tap/goago
+brew trust --cask agentstation/tap/goago
+brew install --cask agentstation/tap/goago
 ```
 
 Release archives, checksums, and software bills of materials are available on
